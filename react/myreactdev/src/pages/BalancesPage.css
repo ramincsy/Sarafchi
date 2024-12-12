@@ -1,0 +1,95 @@
+.balances-page {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.balances-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.balance-box {
+  flex: 1 1 300px;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.balance-toman {
+  background-color: #007bff;
+}
+
+.balance-usd {
+  background-color: #28a745;
+}
+
+.balance-usdt {
+  background-color: #17a2b8;
+}
+
+.balance-debt-credit {
+  background-color: #ffc107;
+}
+
+.balance-locked {
+  background-color: #dc3545;
+}
+
+.balance-withdrawable {
+  background-color: #20c997;
+}
+
+.balance-loan {
+  background-color: #6f42c1;
+}
+
+/* Table Section */
+.transactions-section {
+  margin-top: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.transactions-table th,
+.transactions-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.transactions-table th {
+  background-color: #007bff;
+  color: white;
+}
+
+.transactions-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.transactions-table tr:hover {
+  background-color: #f1f1f1;
+}

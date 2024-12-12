@@ -1,0 +1,38 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+
+.layout.dark-mode {
+  background-color: #222;
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+.subheader {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.subheader-item {
+  padding: 5px 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.subheader-item strong {
+  color: #333;
+}

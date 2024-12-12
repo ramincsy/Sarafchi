@@ -1,0 +1,68 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f8f9fa; /* پس‌زمینه روشن پیش‌فرض */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  color: #333; /* رنگ متن پیش‌فرض */
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+
+/* حالت تاریک */
+.header.dark-mode {
+  background-color: #121212; /* پس‌زمینه تاریک */
+  color: #e0e0e0; /* رنگ متن برای کنتراست بالا */
+}
+
+/* دکمه‌ها و آیکون‌ها */
+.header .icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: inherit; /* استفاده از رنگ متن هدر */
+  transition: color 0.3s;
+}
+
+.header .icon-btn:hover {
+  color: #007bff; /* تغییر رنگ هنگام هاور */
+}
+
+/* عنوان هدر */
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+/* آواتار کاربر */
+.header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 10px;
+  transition: border-color 0.3s;
+}
+
+/* آیکون کاربر */
+.user-icon {
+  font-size: 18px;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: color 0.3s;
+}
+
+.user-icon:hover {
+  color: #007bff; /* رنگ هنگام هاور */
+}
+
+/* حالت مخفی آواتار */
+.header-avatar {
+  display: none; /* اگر از آواتار استفاده نمی‌کنید */
+}
