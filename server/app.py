@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from user_routes import user_bp
 from balances_routes import balances_bp
-from transactions_routes import transactions_bp  # Import تراکنش‌ها
+from transactions_routes import transactions_bp  
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager , jwt_required, get_jwt_identity
 from datetime import datetime
