@@ -3,8 +3,13 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from user_routes import user_bp
+<<<<<<< HEAD
 from balances_routes import balances_bp  # مسیر فایل Blueprint
 from transactions_routes import transactions_bp  # Import تراکنش‌ها
+=======
+from balances_routes import balances_bp
+from transactions_routes import transactions_bp  
+>>>>>>> 06f15ecdc9cb010569aff8b442bbbd9fe1924bb8
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager , jwt_required, get_jwt_identity
 from datetime import datetime
