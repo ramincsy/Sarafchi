@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from user_routes import user_bp
-from balances_routes import balances_bp
+from balances_routes import balances_bp  # مسیر فایل Blueprint
 from transactions_routes import transactions_bp  # Import تراکنش‌ها
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager , jwt_required, get_jwt_identity
@@ -14,7 +14,11 @@ import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import text
 import traceback
-
+from exchange_prices_routes import exchange_prices_bp
+import os
+from inquiry_jibit import jibit_bp
+from sqlalchemy import text
+from withdrawals_routes import withdrawals_bp
 
 
 app = Flask(__name__)
@@ -24,13 +28,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@localhost/sarafchi-DB?d
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'your_secret_key_here'
 
+os.environ["API_KEY"] = "SuRs2Cuz8c"
+os.environ["SECRET_KEY"] = "IpV58LOVQDNouNNT_uCpwFMaE"
+
 db.init_app(app)
 ma.init_app(app)
 jwt = JWTManager(app)
 
 app.register_blueprint(user_bp, url_prefix="/")
-app.register_blueprint(balances_bp, url_prefix="/api")
+app.register_blueprint(balances_bp, url_prefix='/api')  # تنظیم URL prefix برای تمام مسیرهای Blueprint
 app.register_blueprint(transactions_bp, url_prefix="/api")  # Register تراکنش‌ها
+app.register_blueprint(exchange_prices_bp, url_prefix="/api")
+app.register_blueprint(jibit_bp, url_prefix='/api/jibit')
+app.register_blueprint(withdrawals_bp, url_prefix="/api/withdrawals")
 
 @app.route('/api/live-price', methods=['GET'])
 def get_live_price():
@@ -45,6 +55,15 @@ def get_live_price():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/test-db-connection', methods=['GET'])
+def test_db_connection():
+    try:
+        # اجرای یک کوئری ساده برای بررسی اتصال به دیتابیس
+        db.session.execute(text('SELECT 1'))
+        return jsonify({"success": True, "message": "Database connection is working"}), 200
+    except Exception as e:
+        # در صورت وقوع خطا، پیام خطا را برگردانید
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

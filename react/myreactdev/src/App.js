@@ -19,6 +19,9 @@ import LiveTransaction from "./pages/Transactions/LiveTransaction";
 import BalancesPage from "./pages/BalancesPage"; // Import the BalancesPage
 import DepositPage from "./pages/DepositPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import ExchangePrices from "./pages/ExchangePrices";
+import JibitPage from "./pages/JibitPage";
+import WithdrawPage from "./pages/WithdrawPage";
 
 function App() {
   return (
@@ -112,6 +115,30 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <DepositPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/exchange-prices"
+                      element={
+                        <ProtectedRoute>
+                          <ExchangePrices />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/JibitPage"
+                      element={
+                        <ProtectedRoute>
+                          <JibitPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/WithdrawPage"
+                      element={
+                        <ProtectedRoute>
+                          <WithdrawPage />
                         </ProtectedRoute>
                       }
                     />

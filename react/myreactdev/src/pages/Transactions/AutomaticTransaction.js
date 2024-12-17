@@ -52,6 +52,7 @@ const AutomaticTransaction = () => {
 
   const currentUserID = getCurrentUserID();
   const createdBy = currentUserID || "System";
+  console.log(createdBy);
 
   useEffect(() => {
     const fetchPrice = async () => {

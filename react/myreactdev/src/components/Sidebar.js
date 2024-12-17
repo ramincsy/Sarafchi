@@ -42,6 +42,9 @@ const Sidebar = forwardRef(({ isVisible }, ref) => {
         <li>
           <Link to="/deposit">واریز</Link>
         </li>
+        <li>
+          <Link to="/exchange-prices">قیمت صرافی ها</Link>
+        </li>
       </ul>
       <div className="sidebar-footer">
         <button className="sidebar-darkmode">حالت روشن / حالت تاریک</button>
