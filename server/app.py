@@ -3,13 +3,8 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from user_routes import user_bp
-<<<<<<< HEAD
 from balances_routes import balances_bp  # مسیر فایل Blueprint
 from transactions_routes import transactions_bp  # Import تراکنش‌ها
-=======
-from balances_routes import balances_bp
-from transactions_routes import transactions_bp  
->>>>>>> 06f15ecdc9cb010569aff8b442bbbd9fe1924bb8
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager , jwt_required, get_jwt_identity
 from datetime import datetime
@@ -24,6 +19,7 @@ import os
 from inquiry_jibit import jibit_bp
 from sqlalchemy import text
 from withdrawals_routes import withdrawals_bp
+from roles_permissions_routes import roles_permissions_bp
 
 
 app = Flask(__name__)
@@ -46,6 +42,8 @@ app.register_blueprint(transactions_bp, url_prefix="/api")  # Register تراک�
 app.register_blueprint(exchange_prices_bp, url_prefix="/api")
 app.register_blueprint(jibit_bp, url_prefix='/api/jibit')
 app.register_blueprint(withdrawals_bp, url_prefix="/api/withdrawals")
+app.register_blueprint(roles_permissions_bp, url_prefix="/api/roles-permissions")
+
 
 @app.route('/api/live-price', methods=['GET'])
 def get_live_price():

@@ -22,6 +22,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ExchangePrices from "./pages/ExchangePrices";
 import JibitPage from "./pages/JibitPage";
 import WithdrawPage from "./pages/WithdrawPage";
+import AllTransactionsPage from "./pages/AllTransactionsPage";
+import AllWithdrawalsPage from "./pages/AllWithdrawalsPage";
+import RolesPermissionsManager from "./pages/RolesPermissionsManager";
 
 function App() {
   return (
@@ -139,6 +142,30 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <WithdrawPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/AllTransactionsPage"
+                      element={
+                        <ProtectedRoute>
+                          <AllTransactionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/AllWithdrawalsPage"
+                      element={
+                        <ProtectedRoute>
+                          <AllWithdrawalsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/RolesPermissionsManager"
+                      element={
+                        <ProtectedRoute>
+                          <RolesPermissionsManager />
                         </ProtectedRoute>
                       }
                     />

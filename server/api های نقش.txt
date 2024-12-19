@@ -1,0 +1,8 @@
+مسیرهای API جدید
+POST /api/roles-permissions/roles → اضافه کردن نقش جدید
+POST /api/roles-permissions/permissions → اضافه کردن مجوز جدید
+POST /api/roles-permissions/roles/<role_id>/permissions → اتصال مجوز به نقش
+POST /api/roles-permissions/users/<user_id>/roles → تخصیص نقش به کاربر
+GET /api/roles-permissions/users/<user_id>/roles → دریافت نقش‌های کاربر
+GET /api/roles-permissions/roles/<role_id>/permissions → دریافت مجوزهای نقش
+POST /api/roles-permissions/users/<user_id>/permissions → بررسی دسترسی کاربر به مجوز

@@ -19,10 +19,7 @@ const Sidebar = forwardRef(({ isVisible }, ref) => {
           <Link to="/">صفحه اصلی</Link>
         </li>
         <li>
-          <Link to="/addnewuser">افزودن کاربر</Link>
-        </li>
-        <li>
-          <Link to="/listusers">لیست کاربران</Link>
+          <Link to="/addnewuser">مدیریت کاربر</Link>
         </li>
         <li>
           <Link to="/automatic-transaction">معامله اتوماتیک </Link>
@@ -45,10 +42,19 @@ const Sidebar = forwardRef(({ isVisible }, ref) => {
         <li>
           <Link to="/exchange-prices">قیمت صرافی ها</Link>
         </li>
+        <li>
+          <Link to="/JibitPage"> استعلام کارت شبا</Link>
+        </li>
+        <li>
+          <Link to="/WithdrawPage">برداشت ها</Link>
+        </li>
+        <li>
+          <Link to="/AllTransactionsPage">معاملات کلی</Link>
+        </li>
+        <li>
+          <Link to="/AllWithdrawalsPage">برداشت های کلی</Link>
+        </li>
       </ul>
-      <div className="sidebar-footer">
-        <button className="sidebar-darkmode">حالت روشن / حالت تاریک</button>
-      </div>
     </nav>
   );
 });
