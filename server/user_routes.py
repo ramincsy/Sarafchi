@@ -5,35 +5,90 @@ from flask_jwt_extended import (
 )
 from datetime import datetime, timedelta
 from user_models import Users, JwtTokens, db, user_schema, users_schema
+from sqlalchemy import text
+from flask import Blueprint, request, jsonify
+from sqlalchemy.sql import text
+from datetime import datetime, timedelta
+from user_models import Users, JwtTokens, db
+
+user_bp = Blueprint('user_bp', __name__)
+
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, jwt_required,
+    get_jwt_identity
+)
+from datetime import datetime, timedelta
+from user_models import Users, JwtTokens, db, user_schema, users_schema
+from sqlalchemy import text
+from flask import Blueprint, request, jsonify
+from sqlalchemy.sql import text
+from datetime import datetime, timedelta
+from user_models import Users, JwtTokens, db
 
 user_bp = Blueprint('user_bp', __name__)
 
 @user_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')  # تغییر از Email به email
-    password = data.get('password')  # تغییر از Password به password
+    email = data.get('email')
+    password = data.get('password')
 
     user = Users.query.filter_by(Email=email).first()
 
-    if user and user.Password == password:  # در اینجا اگر پسوردها عیناً ذخیره شده، مشکلی نیست
+    if user and user.Password == password:
+        # دریافت نقش‌ها و مجوزهای کاربر با استور پروسیجر
+        user_roles_permissions = db.session.execute(
+            text("EXEC spGetUsersWithRolesAndPermissions")
+        ).fetchall()
+
+        # فیلتر اطلاعات برای کاربر جاری و تبدیل به دیکشنری
+        user_roles_permissions = [
+            dict(row._mapping) for row in user_roles_permissions if row._mapping["UserID"] == user.ID
+        ]
+
+        roles = list(set(row['RoleName'] for row in user_roles_permissions if row['RoleName']))
+        role_ids = list(set(row['RoleID'] for row in user_roles_permissions if row['RoleID']))
+        permissions = list(set(row['PermissionName'] for row in user_roles_permissions if row['PermissionName']))
+        permission_ids = list(set(row['PermissionID'] for row in user_roles_permissions if row['PermissionID']))
+
+        # دریافت صفحات مرتبط با نقش‌ها و مجوزها
+        pages_with_roles_permissions = db.session.execute(
+            text("EXEC spGetPagesWithRolesAndPermissions")
+        ).fetchall()
+
+        pages_with_roles_permissions = [
+            dict(row._mapping) for row in pages_with_roles_permissions
+        ]
+
+        # اطلاعات کامل کاربر
+        existing_user_info = {
+            "id": user.ID,
+            "firstName": user.FirstName,
+            "lastName": user.LastName,
+            "email": user.Email,
+            "roles": roles,
+            "role_ids": role_ids,
+            "permissions": permissions,
+            "permission_ids": permission_ids,
+            "pages": pages_with_roles_permissions,
+        }
+
+        # ایجاد توکن JWT
         access_token_expires = timedelta(minutes=15)
         refresh_token_expires = timedelta(days=7)
 
         access_token = create_access_token(
-            identity={
-                "id": user.ID,
-                "firstName": user.FirstName,
-                "lastName": user.LastName,
-                "email": user.Email
-            },
+            identity=existing_user_info,
             expires_delta=access_token_expires
         )
-        refresh_token = create_refresh_token(identity={"id": user.ID}, expires_delta=refresh_token_expires)
+        refresh_token = create_refresh_token(
+            identity={"id": user.ID}, expires_delta=refresh_token_expires
+        )
 
+        # ذخیره توکن رفرش
         expire_date = datetime.now() + refresh_token_expires
         new_token = JwtTokens(user_id=user.ID, refresh_token=refresh_token, expire_date=expire_date)
-
         db.session.add(new_token)
         db.session.commit()
 
@@ -43,6 +98,11 @@ def login():
             'first_name': user.FirstName,
             'last_name': user.LastName,
             'email': user.Email,
+            'roles': roles,
+            'role_ids': role_ids,
+            'permissions': permissions,
+            'permission_ids': permission_ids,
+            'pages': pages_with_roles_permissions,
             'access_token': access_token,
             'refresh_token': refresh_token,
             'access_token_expiry': (datetime.now() + access_token_expires).isoformat(),
@@ -50,7 +110,10 @@ def login():
         }
 
         response = jsonify(response_data)
-        response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, samesite='Strict', max_age=7 * 24 * 60 * 60)
+        response.set_cookie(
+            'refresh_token', refresh_token, httponly=True, secure=True,
+            samesite='Strict', max_age=7 * 24 * 60 * 60
+        )
         return response, 200
 
     return jsonify({'error': 'Invalid credentials'}), 401

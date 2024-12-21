@@ -36,8 +36,12 @@ const LoginPage = () => {
           "user_info",
           JSON.stringify({
             user_id: data.user_id,
-            name: data.name,
+            first_name: data.first_name,
+            last_name: data.last_name,
             email: data.email,
+            roles: data.roles, // نقش‌ها
+            permissions: data.permissions, // مجوزها
+            pages: data.pages, // صفحات
             access_token_expiry: data.access_token_expiry,
             refresh_token_expiry: data.refresh_token_expiry,
           })
@@ -47,8 +51,12 @@ const LoginPage = () => {
         setAuthToken(data.access_token);
         setUserInfo({
           user_id: data.user_id,
-          name: data.name,
+          first_name: data.first_name,
+          last_name: data.last_name,
           email: data.email,
+          roles: data.roles,
+          permissions: data.permissions,
+          pages: data.pages,
         });
 
         // انتقال به صفحه اصلی یا صفحه قبلی
@@ -56,7 +64,10 @@ const LoginPage = () => {
       } else if (response.status === 401) {
         setError("ایمیل یا رمز عبور نادرست است.");
       } else {
-        setError("خطایی رخ داده است. لطفاً دوباره تلاش کنید.");
+        const errorData = await response.json();
+        setError(
+          errorData.error || "خطایی رخ داده است. لطفاً دوباره تلاش کنید."
+        );
       }
     } catch (err) {
       setError("مشکلی در برقراری ارتباط با سرور وجود دارد.");

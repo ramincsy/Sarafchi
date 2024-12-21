@@ -25,165 +25,180 @@ import WithdrawPage from "./pages/WithdrawPage";
 import AllTransactionsPage from "./pages/AllTransactionsPage";
 import AllWithdrawalsPage from "./pages/AllWithdrawalsPage";
 import RolesPermissionsManager from "./pages/RolesPermissionsManager";
-
+import PageManager from "./pages/PageManager";
+import { PermissionsProvider } from "./contexts/PermissionsContext";
+import UnauthorizedPage from "../src/pages/UnauthorizedPage";
 function App() {
   return (
     <AuthProvider>
       <DarkModeProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              path="*"
-              element={
-                <Layout>
-                  <Routes>
-                    {/* Dashboard as default route */}
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/addnewuser"
-                      element={
-                        <ProtectedRoute>
-                          <CreateUser />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/user/:id/edit"
-                      element={
-                        <ProtectedRoute>
-                          <EditUser />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Add routes for transactions */}
-                    <Route
-                      path="/automatic-transaction"
-                      element={
-                        <ProtectedRoute>
-                          <AutomaticTransaction />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/listusers"
-                      element={
-                        <ProtectedRoute>
-                          <ListUserPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/suggested-transaction"
-                      element={
-                        <ProtectedRoute>
-                          <SuggestedTransaction />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/live-transaction"
-                      element={
-                        <ProtectedRoute>
-                          <LiveTransaction />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Add BalancesPage route */}
-                    <Route
-                      path="/balances"
-                      element={
-                        <ProtectedRoute>
-                          <BalancesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/AdminDashboard"
-                      element={
-                        <ProtectedRoute>
-                          <AdminDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/deposit"
-                      element={
-                        <ProtectedRoute>
-                          <DepositPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/exchange-prices"
-                      element={
-                        <ProtectedRoute>
-                          <ExchangePrices />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/JibitPage"
-                      element={
-                        <ProtectedRoute>
-                          <JibitPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/WithdrawPage"
-                      element={
-                        <ProtectedRoute>
-                          <WithdrawPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/AllTransactionsPage"
-                      element={
-                        <ProtectedRoute>
-                          <AllTransactionsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/AllWithdrawalsPage"
-                      element={
-                        <ProtectedRoute>
-                          <AllWithdrawalsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/RolesPermissionsManager"
-                      element={
-                        <ProtectedRoute>
-                          <RolesPermissionsManager />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Fallback route for unmatched paths */}
-                    <Route
-                      path="*"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Routes>
-                </Layout>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <PermissionsProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />{" "}
+              {/* Unauthorized page */}
+              <Route
+                path="*"
+                element={
+                  <Layout>
+                    <Routes>
+                      {/* Dashboard as default route */}
+                      <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <DashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/addnewuser"
+                        element={
+                          <ProtectedRoute>
+                            <CreateUser />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/user/:id/edit"
+                        element={
+                          <ProtectedRoute>
+                            <EditUser />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Add routes for transactions */}
+                      <Route
+                        path="/automatic-transaction"
+                        element={
+                          <ProtectedRoute>
+                            <AutomaticTransaction />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/listusers"
+                        element={
+                          <ProtectedRoute>
+                            <ListUserPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/suggested-transaction"
+                        element={
+                          <ProtectedRoute>
+                            <SuggestedTransaction />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/live-transaction"
+                        element={
+                          <ProtectedRoute>
+                            <LiveTransaction />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Add BalancesPage route */}
+                      <Route
+                        path="/balances"
+                        element={
+                          <ProtectedRoute>
+                            <BalancesPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/AdminDashboard"
+                        element={
+                          <ProtectedRoute>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/deposit"
+                        element={
+                          <ProtectedRoute>
+                            <DepositPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/exchange-prices"
+                        element={
+                          <ProtectedRoute>
+                            <ExchangePrices />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/JibitPage"
+                        element={
+                          <ProtectedRoute>
+                            <JibitPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/WithdrawPage"
+                        element={
+                          <ProtectedRoute>
+                            <WithdrawPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/AllTransactionsPage"
+                        element={
+                          <ProtectedRoute>
+                            <AllTransactionsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/AllWithdrawalsPage"
+                        element={
+                          <ProtectedRoute>
+                            <AllWithdrawalsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      <Route
+                        path="/RolesPermissionsManager"
+                        element={
+                          <ProtectedRoute>
+                            <RolesPermissionsManager />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/PageManager"
+                        element={
+                          <ProtectedRoute>
+                            <PageManager />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Fallback route for unmatched paths */}
+                      <Route
+                        path="*"
+                        element={
+                          <ProtectedRoute>
+                            <DashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Routes>
+                  </Layout>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </PermissionsProvider>
       </DarkModeProvider>
     </AuthProvider>
   );

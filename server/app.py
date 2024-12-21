@@ -20,6 +20,7 @@ from inquiry_jibit import jibit_bp
 from sqlalchemy import text
 from withdrawals_routes import withdrawals_bp
 from roles_permissions_routes import roles_permissions_bp
+from page_routes import page_bp
 
 
 app = Flask(__name__)
@@ -42,7 +43,9 @@ app.register_blueprint(transactions_bp, url_prefix="/api")  # Register تراک�
 app.register_blueprint(exchange_prices_bp, url_prefix="/api")
 app.register_blueprint(jibit_bp, url_prefix='/api/jibit')
 app.register_blueprint(withdrawals_bp, url_prefix="/api/withdrawals")
-app.register_blueprint(roles_permissions_bp, url_prefix="/api/roles-permissions")
+app.register_blueprint(page_bp, url_prefix='/api')
+app.register_blueprint(roles_permissions_bp, url_prefix='/api/RolesPermissionsManager')
+
 
 
 @app.route('/api/live-price', methods=['GET'])

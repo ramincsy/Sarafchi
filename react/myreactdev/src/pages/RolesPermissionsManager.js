@@ -19,7 +19,7 @@ const RolesPermissionsManager = () => {
 
   const axiosInstance = useCallback(
     axios.create({
-      baseURL: "http://127.0.0.1:5000/api/roles-permissions", // مسیر صحیح
+      baseURL: "http://localhost:5000/api/RolesPermissionsManager", // مسیر صحیح
     }),
     []
   );
@@ -28,14 +28,22 @@ const RolesPermissionsManager = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/users");
+
       if (Array.isArray(response.data)) {
-        setUsers(response.data);
+        const normalizedUsers = response.data.map((user) => ({
+          ...user,
+          Roles: user.Roles || [], // پیش‌فرض آرایه خالی برای نقش‌ها
+          Permissions: user.Permissions || [], // پیش‌فرض آرایه خالی برای مجوزها
+        }));
+
+        console.log("Fetched users with normalization:", normalizedUsers); // لاگ برای بررسی داده‌ها
+        setUsers(normalizedUsers);
       } else {
         throw new Error("Invalid user data format");
       }
     } catch (err) {
       setError("خطا در دریافت لیست کاربران.");
-      console.error(err);
+      console.error("Error fetching users:", err);
     } finally {
       setLoading(false);
     }
@@ -451,7 +459,7 @@ const RolesPermissionsManager = () => {
                   user.LastName || "نام خانوادگی"
                 }`}</td>
                 <td>
-                  {user.Roles.length > 0 ? (
+                  {user.Roles && user.Roles.length > 0 ? (
                     user.Roles.map((role) => (
                       <div
                         className="role-item"
@@ -478,7 +486,7 @@ const RolesPermissionsManager = () => {
                   )}
                 </td>
                 <td>
-                  {user.Permissions.length > 0 ? (
+                  {user.Permissions && user.Permissions.length > 0 ? (
                     user.Permissions.map((permission) => (
                       <span className="badge" key={permission.PermissionID}>
                         {permission.PermissionName}

@@ -54,6 +54,12 @@ const Sidebar = forwardRef(({ isVisible }, ref) => {
         <li>
           <Link to="/AllWithdrawalsPage">برداشت های کلی</Link>
         </li>
+        <li>
+          <Link to="/RolesPermissionsManager"> مدیریت نقش ها و مجوز ها</Link>
+        </li>
+        <li>
+          <Link to="/PageManager"> مدیریت صفحات</Link>
+        </li>
       </ul>
     </nav>
   );

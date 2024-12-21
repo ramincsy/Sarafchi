@@ -132,26 +132,27 @@ def test_db():
         return jsonify({"success": True, "result": output}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+# دریافت لیست نقش‌ها
 @roles_permissions_bp.route('/roles', methods=['GET'])
 def get_roles():
     try:
-        result = db.session.execute(text("SELECT RoleID, RoleName, Description FROM Roles"))
-        # استفاده از _mapping برای تبدیل صحیح به دیکشنری
-        roles = [dict(row._mapping) for row in result.fetchall()]
-        return jsonify(roles), 200
+        # اجرای استور پروسیجر برای دریافت نقش‌ها
+        roles = db.session.execute(text("EXEC spGetAllRoles")).fetchall()
+        roles_list = [dict(row._mapping) for row in roles]
+        return jsonify(roles_list), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"خطا در دریافت نقش‌ها: {str(e)}"}), 500
 
-
+# دریافت لیست مجوزها
 @roles_permissions_bp.route('/permissions', methods=['GET'])
 def get_permissions():
     try:
-        result = db.session.execute(text("SELECT PermissionID, PermissionName, Description FROM Permissions"))
-        # تبدیل خروجی به دیکشنری
-        permissions = [dict(row._mapping) for row in result.fetchall()]
-        return jsonify(permissions), 200
+        # اجرای استور پروسیجر برای دریافت مجوزها
+        permissions = db.session.execute(text("EXEC spGetAllPermissions")).fetchall()
+        permissions_list = [dict(row._mapping) for row in permissions]
+        return jsonify(permissions_list), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"خطا در دریافت مجوزها: {str(e)}"}), 500
 
 @roles_permissions_bp.route('/users', methods=['GET'])
 def get_users_with_roles_and_permissions():
