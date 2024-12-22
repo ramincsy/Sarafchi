@@ -8,6 +8,7 @@ import {
 } from "react-table";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import AuthContext from "../../contexts/AuthContext"; // اضافه کنید اگر نیاز هست
+import TransactionService from "../../services/TransactionService";
 
 // Global Filter Component
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => {
@@ -56,11 +57,7 @@ const SuggestedTransaction = () => {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/transactions");
-      if (!response.ok) {
-        throw new Error("خطا در دریافت داده‌های تراکنش");
-      }
-      const data = await response.json();
+      const data = await TransactionService.fetchTransactions(); // استفاده از TransactionService
       setTransactions(
         data.map((transaction) => ({
           id: transaction.TransactionID,
@@ -78,7 +75,7 @@ const SuggestedTransaction = () => {
         }))
       );
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching transactions:", error);
       alert("خطا در واکشی تراکنش‌ها");
     }
   };

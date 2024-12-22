@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./AllTransactionsPage.css";
 
+import "./AllTransactionsPage.css";
+import ApiManager from "../services/ApiManager"; // استفاده از ApiManager
 export default function AllTransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -12,10 +12,10 @@ export default function AllTransactionsPage() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/transactions");
-        if (Array.isArray(res.data)) {
-          setTransactions(res.data);
-          setFilteredTransactions(res.data);
+        const data = await ApiManager.TransactionsService.fetchTransactions();
+        if (Array.isArray(data)) {
+          setTransactions(data);
+          setFilteredTransactions(data);
         } else {
           setError("فرمت داده‌ها صحیح نیست.");
         }
@@ -27,27 +27,18 @@ export default function AllTransactionsPage() {
 
     fetchTransactions();
   }, []);
-
   // تأیید تراکنش
   const handleApprove = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/transactions/confirm/${id}`
+      const data = await ApiManager.TransactionsService.updateTransactionStatus(
+        id,
+        "confirm"
       );
-      if (res.data.success) {
+      if (data.success) {
         alert("تراکنش تأیید شد");
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.TransactionID === id ? { ...tx, Status: "Approved" } : tx
-          )
-        );
-        setFilteredTransactions((prev) =>
-          prev.map((tx) =>
-            tx.TransactionID === id ? { ...tx, Status: "Approved" } : tx
-          )
-        );
+        updateTransactionStatus(id, "Approved");
       } else {
-        alert(res.data.message || "خطا در تأیید تراکنش");
+        alert(data.message || "خطا در تأیید تراکنش");
       }
     } catch (err) {
       console.error("Error approving transaction:", err);
@@ -58,28 +49,33 @@ export default function AllTransactionsPage() {
   // لغو تراکنش
   const handleReject = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/transactions/cancel/${id}`
+      const data = await ApiManager.TransactionsService.updateTransactionStatus(
+        id,
+        "cancel"
       );
-      if (res.data.success) {
+      if (data.success) {
         alert("تراکنش لغو شد");
-        setTransactions((prev) =>
-          prev.map((tx) =>
-            tx.TransactionID === id ? { ...tx, Status: "Rejected" } : tx
-          )
-        );
-        setFilteredTransactions((prev) =>
-          prev.map((tx) =>
-            tx.TransactionID === id ? { ...tx, Status: "Rejected" } : tx
-          )
-        );
+        updateTransactionStatus(id, "Rejected");
       } else {
-        alert(res.data.message || "خطا در لغو تراکنش");
+        alert(data.message || "خطا در لغو تراکنش");
       }
     } catch (err) {
       console.error("Error rejecting transaction:", err);
       alert("خطا در لغو تراکنش");
     }
+  };
+  // به‌روزرسانی وضعیت تراکنش‌ها
+  const updateTransactionStatus = (id, status) => {
+    setTransactions((prev) =>
+      prev.map((tx) =>
+        tx.TransactionID === id ? { ...tx, Status: status } : tx
+      )
+    );
+    setFilteredTransactions((prev) =>
+      prev.map((tx) =>
+        tx.TransactionID === id ? { ...tx, Status: status } : tx
+      )
+    );
   };
 
   // فیلتر داده‌ها

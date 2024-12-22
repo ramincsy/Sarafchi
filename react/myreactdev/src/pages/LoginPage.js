@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import AuthContext from "../contexts/AuthContext";
-
+import UserService from "../services/UserService";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,60 +17,42 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: "include", // ارسال کوکی‌ها
-      });
+      const data = await UserService.login(email, password);
 
-      if (response.ok) {
-        const data = await response.json();
-
-        // ذخیره اطلاعات کاربر در localStorage
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        localStorage.setItem(
-          "user_info",
-          JSON.stringify({
-            user_id: data.user_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            email: data.email,
-            roles: data.roles, // نقش‌ها
-            permissions: data.permissions, // مجوزها
-            pages: data.pages, // صفحات
-            access_token_expiry: data.access_token_expiry,
-            refresh_token_expiry: data.refresh_token_expiry,
-          })
-        );
-
-        // ذخیره اطلاعات در context برای دسترسی در سایر صفحات
-        setAuthToken(data.access_token);
-        setUserInfo({
+      // ذخیره اطلاعات کاربر در localStorage
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      localStorage.setItem(
+        "user_info",
+        JSON.stringify({
           user_id: data.user_id,
           first_name: data.first_name,
           last_name: data.last_name,
           email: data.email,
-          roles: data.roles,
-          permissions: data.permissions,
-          pages: data.pages,
-        });
+          roles: data.roles, // نقش‌ها
+          permissions: data.permissions, // مجوزها
+          pages: data.pages, // صفحات
+          access_token_expiry: data.access_token_expiry,
+          refresh_token_expiry: data.refresh_token_expiry,
+        })
+      );
 
-        // انتقال به صفحه اصلی یا صفحه قبلی
-        navigate("/");
-      } else if (response.status === 401) {
-        setError("ایمیل یا رمز عبور نادرست است.");
-      } else {
-        const errorData = await response.json();
-        setError(
-          errorData.error || "خطایی رخ داده است. لطفاً دوباره تلاش کنید."
-        );
-      }
+      // ذخیره اطلاعات در context برای دسترسی در سایر صفحات
+      setAuthToken(data.access_token);
+      setUserInfo({
+        user_id: data.user_id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        roles: data.roles,
+        permissions: data.permissions,
+        pages: data.pages,
+      });
+
+      // انتقال به صفحه اصلی یا صفحه قبلی
+      navigate("/");
     } catch (err) {
-      setError("مشکلی در برقراری ارتباط با سرور وجود دارد.");
+      setError(err || "مشکلی در ورود رخ داده است. لطفاً دوباره تلاش کنید.");
     } finally {
       setIsLoading(false);
     }

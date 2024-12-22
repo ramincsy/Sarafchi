@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../pages/AdminDashboard.css";
-
+import ApiManager from "../services/ApiManager"; // استفاده از ApiManager
 export default function Dashboard() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [error, setError] = useState(null);
@@ -42,9 +42,10 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchWithdrawals = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/withdrawals");
-        if (res.data.success) {
-          setWithdrawals(res.data.data);
+        const data = await ApiManager.WithdrawalsService.fetchWithdrawals();
+
+        if (data.success) {
+          setWithdrawals(data.data);
         } else {
           setError("خطا در دریافت اطلاعات برداشت‌ها");
         }
@@ -53,11 +54,12 @@ export default function Dashboard() {
         setError("خطای شبکه یا سرور");
       }
     };
+
     const fetchPrice = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/live-price");
-        if (res.data.success) {
-          const sellPrice = res.data.price;
+        const data = await ApiManager.PriceService.fetchPrice();
+        if (data.success) {
+          const sellPrice = data.price;
           const calculatedBuyPrice = sellPrice - 950;
           setLivePrice(sellPrice); // قیمت فروش
           setBuyPrice(calculatedBuyPrice); // قیمت خرید
@@ -73,10 +75,7 @@ export default function Dashboard() {
 
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/transactions");
-        const data = res.data;
-
-        // Update transactions
+        const data = await ApiManager.TransactionsService.fetchTransactions();
         const updatedTransactions = {
           allTransactions: data,
           suggestedTransactions: data.filter(
@@ -93,8 +92,6 @@ export default function Dashboard() {
           canceledTransactions: data.filter((tx) => tx.Status === "Canceled"),
         };
         setTransactions(updatedTransactions);
-
-        // Update transaction stats
         setTransactionStats({
           allTransactions: data,
           suggestedTransactions:
@@ -103,7 +100,7 @@ export default function Dashboard() {
           automaticTransactions:
             updatedTransactions.automaticTransactions.length,
           totalTransactions: updatedTransactions.allTransactions.length,
-          withdrawals: 0, // You would typically fetch this from an API
+          withdrawals: 0,
         });
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -117,12 +114,11 @@ export default function Dashboard() {
 
   const handleApproveWithdrawal = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/withdrawals/${id}/status`,
-        { Status: "Approved" }
+      const data = await ApiManager.WithdrawalsService.updateWithdrawalStatus(
+        id,
+        "Approved"
       );
-
-      if (res.data.success) {
+      if (data.success) {
         alert("برداشت تأیید شد");
         setWithdrawals((prev) =>
           prev.map((w) =>
@@ -130,7 +126,7 @@ export default function Dashboard() {
           )
         );
       } else {
-        alert(res.data.message);
+        alert(data.message);
       }
     } catch (err) {
       console.error("Error approving withdrawal:", err);
@@ -140,12 +136,12 @@ export default function Dashboard() {
 
   const handleRejectWithdrawal = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/withdrawals/${id}/status`,
-        { Status: "Rejected" } // ارسال وضعیت لغو به سرور
+      const data = await ApiManager.WithdrawalsService.updateWithdrawalStatus(
+        id,
+        "Rejected"
       );
 
-      if (res.data.success) {
+      if (data.success) {
         alert("برداشت لغو شد");
 
         // به‌روزرسانی وضعیت در لیست برداشت‌ها
@@ -155,7 +151,7 @@ export default function Dashboard() {
           )
         );
       } else {
-        alert(`خطا: ${res.data.message}`);
+        alert(`خطا: ${data.message}`);
       }
     } catch (err) {
       console.error("Error rejecting withdrawal:", err);
@@ -224,14 +220,24 @@ export default function Dashboard() {
 
   const handleApprove = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/transactions/confirm/${id}`
+      const data = await ApiManager.TransactionsService.updateTransactionStatus(
+        id,
+        "confirm"
       );
-      if (res.data.success) {
-        alert(res.data.message);
-        window.location.reload();
+      if (data.success) {
+        alert(data.message);
+        setTransactions((prev) => ({
+          ...prev,
+          allTransactions: prev.allTransactions.map((tx) =>
+            tx.TransactionID === id ? { ...tx, Status: "Approved" } : tx
+          ),
+          approvedTransactions: [
+            ...prev.approvedTransactions,
+            prev.allTransactions.find((tx) => tx.TransactionID === id),
+          ],
+        }));
       } else {
-        alert(`Error: ${res.data.error}`);
+        alert(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error("Error approving transaction:", error);
@@ -241,14 +247,24 @@ export default function Dashboard() {
 
   const handleReject = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/transactions/cancel/${id}`
+      const data = await ApiManager.TransactionsService.updateTransactionStatus(
+        id,
+        "cancel"
       );
-      if (res.data.success) {
-        alert(res.data.message);
-        window.location.reload();
+      if (data.success) {
+        alert(data.message);
+        setTransactions((prev) => ({
+          ...prev,
+          allTransactions: prev.allTransactions.map((tx) =>
+            tx.TransactionID === id ? { ...tx, Status: "Rejected" } : tx
+          ),
+          canceledTransactions: [
+            ...prev.canceledTransactions,
+            prev.allTransactions.find((tx) => tx.TransactionID === id),
+          ],
+        }));
       } else {
-        alert(`Server Error: ${res.data.error}`);
+        alert(`Server Error: ${data.error}`);
       }
     } catch (error) {
       console.error("Error rejecting transaction:", error);

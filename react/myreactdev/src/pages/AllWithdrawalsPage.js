@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./AllWithdrawalsPage.css";
-
+import WithdrawalsService from "../services/WithdrawalsService";
 export default function AllWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [error, setError] = useState(null);
@@ -10,9 +10,9 @@ export default function AllWithdrawalsPage() {
   useEffect(() => {
     const fetchWithdrawals = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/api/withdrawals");
-        if (res.data.success) {
-          setWithdrawals(res.data.data);
+        const data = await WithdrawalsService.fetchWithdrawals(); // استفاده از سرویس
+        if (data.success) {
+          setWithdrawals(data.data);
         } else {
           setError("خطا در دریافت اطلاعات برداشت‌ها");
         }
@@ -24,15 +24,13 @@ export default function AllWithdrawalsPage() {
     fetchWithdrawals();
   }, []);
 
-  // تأیید برداشت
   const handleApproveWithdrawal = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/withdrawals/${id}/status`,
-        { Status: "Approved" }
-      );
-
-      if (res.data.success) {
+      const data = await WithdrawalsService.updateWithdrawalStatus(
+        id,
+        "Approved"
+      ); // استفاده از سرویس
+      if (data.success) {
         alert("برداشت تأیید شد");
         setWithdrawals((prev) =>
           prev.map((w) =>
@@ -40,7 +38,7 @@ export default function AllWithdrawalsPage() {
           )
         );
       } else {
-        alert(res.data.message);
+        alert(data.message || "خطا در تأیید برداشت");
       }
     } catch (err) {
       console.error("Error approving withdrawal:", err);
@@ -51,20 +49,19 @@ export default function AllWithdrawalsPage() {
   // لغو برداشت
   const handleRejectWithdrawal = async (id) => {
     try {
-      const res = await axios.post(
-        `http://127.0.0.1:5000/api/withdrawals/${id}/status`,
-        { Status: "Rejected" }
-      );
-
-      if (res.data.success) {
+      const data = await WithdrawalsService.updateWithdrawalStatus(
+        id,
+        "Rejected"
+      ); // استفاده از سرویس
+      if (data.success) {
         alert("برداشت لغو شد");
-        setWithdrawals((prevWithdrawals) =>
-          prevWithdrawals.map((w) =>
+        setWithdrawals((prev) =>
+          prev.map((w) =>
             w.WithdrawalID === id ? { ...w, Status: "Rejected" } : w
           )
         );
       } else {
-        alert(res.data.message);
+        alert(data.message || "خطا در لغو برداشت");
       }
     } catch (err) {
       console.error("Error rejecting withdrawal:", err);

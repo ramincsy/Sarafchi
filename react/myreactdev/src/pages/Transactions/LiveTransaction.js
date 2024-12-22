@@ -8,7 +8,7 @@ import {
 } from "react-table";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import AuthContext from "../../contexts/AuthContext";
-
+import ApiManager from "../../services/ApiManager"; // استفاده از ApiManager
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => {
   const [value, setValue] = useState(globalFilter);
   const onChange = useAsyncDebounce((value) => {
@@ -56,14 +56,11 @@ const LiveTransaction = () => {
   useEffect(() => {
     const fetchLivePrice = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/live-price");
-        if (!response.ok) throw new Error("Failed to fetch live price.");
-        const data = await response.json();
-        if (data.success) {
-          setPrice(data.price);
-        }
+        const data = await ApiManager.TransactionsService.fetchPrice(currency);
+        setPrice(data.price);
       } catch (error) {
-        console.error("Error fetching live price:", error);
+        console.error(error);
+        setPrice(null);
       }
     };
 
@@ -75,9 +72,7 @@ const LiveTransaction = () => {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/transactions");
-      if (!response.ok) throw new Error("Failed to fetch transactions.");
-      const data = await response.json();
+      const data = await ApiManager.TransactionsService.fetchTransactions();
       setTransactions(
         data.map((transaction) => ({
           id: transaction.TransactionID,
@@ -95,7 +90,7 @@ const LiveTransaction = () => {
         }))
       );
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error(error);
     }
   };
 
@@ -124,21 +119,12 @@ const LiveTransaction = () => {
     console.log("Sending transaction data:", transactionData);
 
     try {
-      const response = await fetch("http://localhost:5000/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(transactionData),
-      });
-
-      if (!response.ok) throw new Error("Failed to save transaction.");
+      await ApiManager.TransactionsService.createTransaction(transactionData);
       alert("تراکنش با موفقیت ثبت شد");
       setQuantity("");
       setTotal(null);
       fetchTransactions();
     } catch (error) {
-      console.error("Error saving transaction:", error);
       alert("خطا در ثبت تراکنش");
     }
   };

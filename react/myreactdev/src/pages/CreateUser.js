@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../contexts/AuthContext";
-
+import UserService from "../services/UserService";
 import "./CreateUser.css";
 
 export default function ManageUsers() {
@@ -26,11 +26,10 @@ export default function ManageUsers() {
   // واکشی لیست کاربران
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/listusers");
-      setUsers(response.data);
+      const data = await UserService.fetchUsers();
+      setUsers(data);
     } catch (error) {
-      console.error("Error fetching users:", error);
-      alert("خطا در دریافت لیست کاربران");
+      alert(`خطا در دریافت لیست کاربران: ${error}`);
     }
   };
 
@@ -61,13 +60,11 @@ export default function ManageUsers() {
 
     try {
       if (editingUser) {
-        await axios.put(
-          `http://127.0.0.1:5000/userupdate/${editingUser.ID}`,
-          userPayload
-        );
+        console.log("Editing User:", editingUser);
+        await UserService.updateUser(editingUser.ID, userPayload);
         alert("کاربر با موفقیت ویرایش شد");
       } else {
-        await axios.post("http://127.0.0.1:5000/useradd", userPayload);
+        await UserService.createUser(userPayload);
         alert("کاربر با موفقیت ایجاد شد");
       }
       setInputs({
@@ -81,12 +78,9 @@ export default function ManageUsers() {
       });
       setEditingUser(null);
       fetchUsers();
-      setShowModal(false); // بستن مودال
+      setShowModal(false);
     } catch (error) {
-      console.error("Error saving user:", error);
-      alert(
-        `خطا در ذخیره کاربر: ${error.response?.data?.error || error.message}`
-      );
+      alert(`خطا در ذخیره کاربر: ${error}`);
     }
   };
 
@@ -94,12 +88,11 @@ export default function ManageUsers() {
   const handleDelete = async (id) => {
     if (window.confirm("آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟")) {
       try {
-        await axios.delete(`http://127.0.0.1:5000/userdelete/${id}`);
+        await UserService.deleteUser(id);
         alert("کاربر با موفقیت حذف شد");
         fetchUsers();
       } catch (error) {
-        console.error("Error deleting user:", error);
-        alert("خطا در حذف کاربر");
+        alert(`خطا در حذف کاربر: ${error}`);
       }
     }
   };

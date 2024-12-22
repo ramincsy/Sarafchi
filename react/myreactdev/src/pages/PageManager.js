@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 import "./PageManager.css";
+import PagesService from "../services/PagesService";
 
 const PageManager = () => {
   const [pages, setPages] = useState([]);
@@ -18,17 +19,10 @@ const PageManager = () => {
     fetchPermissions();
   }, []);
 
-  const axiosInstance = axios.create({
-    baseURL: "http://127.0.0.1:5000/api/pages", // مسیر پایه مستقیم به `/api/pages` تنظیم شده است
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
   const fetchPages = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/pages");
-      setPages(response.data);
+      const data = await PagesService.fetchPages();
+      setPages(data);
     } catch (err) {
       setError("خطا در دریافت صفحات.");
       console.error(err);
@@ -37,22 +31,17 @@ const PageManager = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/RolesPermissionsManager/roles"
-      );
-      setRoles(response.data);
+      const data = await PagesService.fetchRoles();
+      setRoles(data);
     } catch (err) {
       setError("خطا در دریافت نقش‌ها.");
       console.error(err);
     }
   };
-
   const fetchPermissions = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/RolesPermissionsManager/permissions"
-      );
-      setPermissions(response.data);
+      const data = await PagesService.fetchPermissions();
+      setPermissions(data);
     } catch (err) {
       setError("خطا در دریافت مجوزها.");
       console.error(err);
@@ -65,27 +54,21 @@ const PageManager = () => {
       return;
     }
     try {
-      console.log("Posting to baseURL:", axiosInstance.defaults.baseURL);
-      console.log("Payload:", newPage);
-
-      const response = await axiosInstance.post("", newPage); // مسیر نباید `/pages` اضافی داشته باشد
-      console.log("Response:", response.data);
-
+      await PagesService.addPage(newPage);
       setNewPage({ PageName: "", PageURL: "" });
       fetchPages();
     } catch (err) {
-      setError(err.response?.data?.error || "خطا در افزودن صفحه.");
-      console.error("Error adding page:", err.response?.data || err);
+      setError(err || "خطا در افزودن صفحه.");
+      console.error(err);
     }
   };
-
   const handleEditPage = async (pageId) => {
     if (!selectedPage.PageName || !selectedPage.PageURL) {
       setError("نام و URL صفحه نمی‌تواند خالی باشد.");
       return;
     }
     try {
-      await axiosInstance.put(`/${pageId}`, selectedPage); // مسیر شامل فقط ID صفحه
+      await PagesService.editPage(pageId, selectedPage);
       setSelectedPage(null);
       fetchPages();
     } catch (err) {
@@ -93,11 +76,10 @@ const PageManager = () => {
       console.error(err);
     }
   };
-
   const handleDeletePage = async (pageId) => {
     if (!window.confirm("آیا از حذف این صفحه اطمینان دارید؟")) return;
     try {
-      await axiosInstance.delete(`/${pageId}`); // مسیر شامل فقط ID صفحه
+      await PagesService.deletePage(pageId);
       fetchPages();
     } catch (err) {
       setError("خطا در حذف صفحه.");
@@ -107,27 +89,21 @@ const PageManager = () => {
 
   const handleAssignRoleToPage = async (pageId) => {
     try {
-      const response = await axiosInstance.post(`/${pageId}/roles`, {
-        RoleID: selectedRole,
-      });
-      console.log("Role assigned successfully:", response.data);
+      await PagesService.assignRoleToPage(pageId, selectedRole);
       fetchPages();
     } catch (err) {
       setError("خطا در تخصیص نقش به صفحه.");
-      console.error("Error assigning role:", err.response?.data || err);
+      console.error(err);
     }
   };
 
   const handleAssignPermissionToPage = async (pageId) => {
     try {
-      const response = await axiosInstance.post(`/${pageId}/permissions`, {
-        PermissionID: selectedPermission,
-      });
-      console.log("Permission assigned successfully:", response.data);
+      await PagesService.assignPermissionToPage(pageId, selectedPermission);
       fetchPages();
     } catch (err) {
       setError("خطا در تخصیص مجوز به صفحه.");
-      console.error("Error assigning permission:", err.response?.data || err);
+      console.error(err);
     }
   };
 

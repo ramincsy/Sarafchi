@@ -37,7 +37,7 @@ db.init_app(app)
 ma.init_app(app)
 jwt = JWTManager(app)
 
-app.register_blueprint(user_bp, url_prefix="/")
+app.register_blueprint(user_bp, url_prefix="/api")
 app.register_blueprint(balances_bp, url_prefix='/api')  # تنظیم URL prefix برای تمام مسیرهای Blueprint
 app.register_blueprint(transactions_bp, url_prefix="/api")  # Register تراکنش‌ها
 app.register_blueprint(exchange_prices_bp, url_prefix="/api")

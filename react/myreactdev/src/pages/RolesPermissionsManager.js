@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import "./RolesPermissionsManager.css";
 
+import "./RolesPermissionsManager.css";
+import RolesPermissionsService from "../services/RolesPermissionsService";
 const RolesPermissionsManager = () => {
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
@@ -17,62 +17,36 @@ const RolesPermissionsManager = () => {
   const [selectedPermission, setSelectedPermission] = useState(null);
   const [selectedPermissions, setSelectedPermissions] = useState({});
 
-  const axiosInstance = useCallback(
-    axios.create({
-      baseURL: "http://localhost:5000/api/RolesPermissionsManager", // مسیر صحیح
-    }),
-    []
-  );
-
   const fetchUsers = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get("/users");
-
-      if (Array.isArray(response.data)) {
-        const normalizedUsers = response.data.map((user) => ({
-          ...user,
-          Roles: user.Roles || [], // پیش‌فرض آرایه خالی برای نقش‌ها
-          Permissions: user.Permissions || [], // پیش‌فرض آرایه خالی برای مجوزها
-        }));
-
-        console.log("Fetched users with normalization:", normalizedUsers); // لاگ برای بررسی داده‌ها
-        setUsers(normalizedUsers);
-      } else {
-        throw new Error("Invalid user data format");
-      }
+      const data = await RolesPermissionsService.fetchUsers();
+      setUsers(data);
     } catch (err) {
-      setError("خطا در دریافت لیست کاربران.");
-      console.error("Error fetching users:", err);
-    } finally {
-      setLoading(false);
+      setError("خطا در دریافت کاربران.");
     }
-  }, [axiosInstance]);
+  }, []);
 
   const fetchRoles = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get("/roles");
-      setRoles(response.data);
+      const data = await RolesPermissionsService.fetchRoles();
+      setRoles(data);
     } catch (err) {
-      setError(
-        `Error fetching roles: ${err.response?.data?.error || err.message}`
-      );
-      console.error("Error fetching roles:", err);
-    } finally {
-      setLoading(false);
+      setError("خطا در دریافت نقش‌ها.");
     }
-  }, [axiosInstance]);
+  }, []);
 
-  const fetchRolesWithPermissions = async () => {
+  const fetchRolesWithPermissions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/roles/permissions`);
-      const rolesData = Array.isArray(response.data) ? response.data : [];
+      const rolesData =
+        await RolesPermissionsService.fetchRolesWithPermissions();
+
+      // پردازش داده‌ها
       const formattedRolePermissions = rolesData.reduce((acc, role) => {
-        acc[role.RoleID] = role.Permissions || [];
+        acc[role.RoleID] = role.Permissions;
         return acc;
       }, {});
+
       setRolePermissions(formattedRolePermissions);
       setRoles(
         rolesData.map((role) => ({
@@ -81,50 +55,36 @@ const RolesPermissionsManager = () => {
         }))
       );
     } catch (err) {
-      setError(
-        `خطا در دریافت نقش‌ها و مجوزها: ${
-          err.response?.data?.error || err.message
-        }`
-      );
+      setError(`خطا در دریافت نقش‌ها و مجوزها: ${err}`);
       console.error("Error fetching roles with permissions:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // وابستگی به متغیرها حذف شد
 
   const fetchPermissions = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get("/permissions");
-      console.log("Fetched permissions:", response.data); // لاگ داده‌های دریافتی
-      setPermissions(response.data);
+      const data = await RolesPermissionsService.fetchPermissions();
+      setPermissions(data);
     } catch (err) {
-      setError(
-        `Error fetching permissions: ${
-          err.response?.data?.error || err.message
-        }`
-      );
-      console.error("Error fetching permissions:", err);
-    } finally {
-      setLoading(false);
+      setError("خطا در دریافت مجوزها.");
     }
-  }, [axiosInstance]);
-
+  }, []);
   useEffect(() => {
     fetchRolesWithPermissions();
     fetchUsers();
     fetchRoles();
     fetchPermissions();
-  }, [fetchRoles, fetchPermissions, fetchUsers]);
+  }, []); // وابستگی‌ها حذف شدند
 
   const fetchUserRoles = async (userId) => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/users/${userId}/roles`); // مسیر صحیح برای دریافت نقش‌های کاربر
-      setUserRoles((prev) => ({ ...prev, [userId]: response.data }));
+      const roles = await RolesPermissionsService.fetchUserRoles(userId);
+      setUserRoles((prev) => ({ ...prev, [userId]: roles }));
     } catch (err) {
-      setError(`Error fetching roles for user ${userId}.`);
-      console.error(err);
+      setError(`خطا در دریافت نقش‌های کاربر ${userId}: ${err}`);
+      console.error("Error fetching roles for user:", err);
     } finally {
       setLoading(false);
     }
@@ -132,67 +92,55 @@ const RolesPermissionsManager = () => {
 
   const handleAddRole = async () => {
     if (!newRole) {
-      setError("Role name cannot be empty.");
+      setError("نام نقش نمی‌تواند خالی باشد.");
       return;
     }
     try {
-      await axiosInstance.post("/roles", { RoleName: newRole });
+      await RolesPermissionsService.addRole(newRole);
       setNewRole("");
       fetchRoles();
     } catch (err) {
-      setError(
-        `Error adding role: ${err.response?.data?.error || err.message}`
-      );
-      console.error("Error adding role:", err);
+      setError("خطا در افزودن نقش.");
     }
   };
 
   const handleAddPermission = async () => {
     if (!newPermission) {
-      setError("Permission name cannot be empty.");
+      setError("نام مجوز نمی‌تواند خالی باشد.");
       return;
     }
     try {
-      const payload = {
-        PermissionName: newPermission,
-        Description: "Some description", // توضیحات دلخواه
-      };
-      console.log("Sending payload:", payload); // لاگ داده‌های ارسالی
-      const response = await axiosInstance.post("/permissions", payload);
-      console.log("Permission added:", response.data); // لاگ پاسخ
+      await RolesPermissionsService.addPermission(
+        newPermission,
+        "توضیحات دلخواه"
+      );
       setNewPermission("");
       fetchPermissions();
     } catch (err) {
-      setError(
-        `Error adding permission: ${err.response?.data?.error || err.message}`
-      );
-      console.error("Error adding permission:", err);
+      setError("خطا در افزودن مجوز.");
     }
   };
 
   const handleAssignPermissionToRole = async (roleId, permissionId) => {
+    console.log("Selected Role ID:", roleId);
+    console.log("Selected Permission ID:", permissionId);
+
     if (!roleId || !permissionId) {
       setError("لطفاً یک نقش و یک مجوز انتخاب کنید.");
       return;
     }
+
     try {
-      setError(""); // پاک کردن خطاها
-      const response = await axiosInstance.post(
-        `/roles/${roleId}/permissions`,
-        {
-          PermissionID: permissionId,
-        }
+      await RolesPermissionsService.assignPermissionToRole(
+        roleId,
+        permissionId
       );
-      if (response.status === 201) {
-        alert("مجوز با موفقیت به نقش تخصیص داده شد.");
-      } else {
-        setError("مشکلی در تخصیص مجوز به نقش وجود دارد.");
-      }
+      alert("مجوز با موفقیت به نقش تخصیص داده شد.");
     } catch (err) {
+      console.error("Error assigning permission to role:", err);
       setError(
         `خطا در تخصیص مجوز: ${err.response?.data?.error || err.message}`
       );
-      console.error(err);
     }
   };
 
@@ -203,17 +151,12 @@ const RolesPermissionsManager = () => {
     }
 
     try {
-      const response = await axiosInstance.post(
-        `/users/${selectedUser}/roles`,
-        { RoleID: selectedRole }
+      await RolesPermissionsService.assignRoleToUser(
+        selectedUser,
+        selectedRole
       );
-
-      if (response.status === 201) {
-        alert("نقش با موفقیت به کاربر تخصیص داده شد.");
-        fetchUserRoles(selectedUser); // به‌روزرسانی لیست نقش‌های کاربر
-      } else {
-        setError("خطایی در تخصیص نقش وجود دارد.");
-      }
+      alert("نقش با موفقیت به کاربر تخصیص داده شد.");
+      fetchUserRoles(selectedUser); // به‌روزرسانی لیست نقش‌های کاربر
       setSelectedRole(""); // پاک کردن نقش انتخاب‌شده
     } catch (err) {
       setError(
@@ -225,15 +168,12 @@ const RolesPermissionsManager = () => {
 
   const handleRemovePermissionFromRole = async (roleId, permissionId) => {
     try {
-      const response = await axiosInstance.delete(
-        `/roles/${roleId}/permissions/${permissionId}`
+      await RolesPermissionsService.removePermissionFromRole(
+        roleId,
+        permissionId
       );
-      if (response.status === 200) {
-        alert("مجوز با موفقیت از نقش حذف شد.");
-        fetchPermissions(roleId); // به‌روزرسانی مجوزهای نقش
-      } else {
-        setError("مشکلی در حذف مجوز از نقش وجود دارد.");
-      }
+      alert("مجوز با موفقیت از نقش حذف شد.");
+      fetchRoles(); // به‌روزرسانی لیست نقش‌ها و مجوزها
     } catch (err) {
       setError(
         `خطا در حذف مجوز از نقش: ${err.response?.data?.error || err.message}`
@@ -244,14 +184,11 @@ const RolesPermissionsManager = () => {
 
   const handleDeleteRole = async (roleId) => {
     if (!window.confirm("آیا از حذف این نقش اطمینان دارید؟")) return;
+
     try {
-      const response = await axiosInstance.delete(`/roles/${roleId}`);
-      if (response.status === 200) {
-        alert("نقش با موفقیت حذف شد.");
-        fetchRoles(); // به‌روزرسانی لیست نقش‌ها
-      } else {
-        setError("مشکلی در حذف نقش وجود دارد.");
-      }
+      await RolesPermissionsService.deleteRole(roleId);
+      alert("نقش با موفقیت حذف شد.");
+      fetchRoles(); // به‌روزرسانی لیست نقش‌ها
     } catch (err) {
       setError(`خطا در حذف نقش: ${err.response?.data?.error || err.message}`);
       console.error(err);
@@ -260,16 +197,11 @@ const RolesPermissionsManager = () => {
 
   const handleDeletePermission = async (permissionId) => {
     if (!window.confirm("آیا از حذف این مجوز اطمینان دارید؟")) return;
+
     try {
-      const response = await axiosInstance.delete(
-        `/permissions/${permissionId}`
-      );
-      if (response.status === 200) {
-        alert("مجوز با موفقیت حذف شد.");
-        fetchPermissions(); // به‌روزرسانی لیست مجوزها
-      } else {
-        setError("مشکلی در حذف مجوز وجود دارد.");
-      }
+      await RolesPermissionsService.deletePermission(permissionId);
+      alert("مجوز با موفقیت حذف شد.");
+      fetchPermissions(); // به‌روزرسانی لیست مجوزها
     } catch (err) {
       setError(`خطا در حذف مجوز: ${err.response?.data?.error || err.message}`);
       console.error(err);
@@ -280,17 +212,13 @@ const RolesPermissionsManager = () => {
     if (!window.confirm("آیا از حذف این نقش اطمینان دارید؟")) return;
 
     try {
-      const response = await axiosInstance.delete(
-        `/users/${userId}/roles/${roleId}`
-      );
-      if (response.status === 200) {
-        alert("نقش با موفقیت حذف شد.");
-        fetchUserRoles(userId); // به‌روزرسانی نقش‌های کاربر
-      } else {
-        setError("مشکلی در حذف نقش وجود دارد.");
-      }
+      await RolesPermissionsService.removeRoleFromUser(userId, roleId);
+      alert("نقش با موفقیت حذف شد.");
+      fetchUserRoles(userId); // به‌روزرسانی لیست نقش‌های کاربر
     } catch (err) {
-      setError(`خطا در حذف نقش: ${err.response?.data?.error || err.message}`);
+      setError(
+        `خطا در حذف نقش از کاربر: ${err.response?.data?.error || err.message}`
+      );
       console.error(err);
     }
   };
@@ -327,7 +255,10 @@ const RolesPermissionsManager = () => {
             <tbody>
               {roles.map((role) => {
                 const selectedPermissionForRole =
-                  selectedPermissions[role.RoleID] || "";
+                  selectedPermissions[role.RoleID] !== undefined
+                    ? selectedPermissions[role.RoleID]
+                    : "";
+
                 return (
                   <tr key={role.RoleID}>
                     <td>{role.RoleID}</td>
@@ -382,10 +313,14 @@ const RolesPermissionsManager = () => {
                         </button>
                         <button
                           onClick={() => {
-                            if (selectedPermissionForRole) {
-                              handleRemovePermissionFromRole(
+                            const permissionId = parseInt(
+                              selectedPermissionForRole,
+                              10
+                            );
+                            if (!isNaN(permissionId)) {
+                              handleAssignPermissionToRole(
                                 role.RoleID,
-                                parseInt(selectedPermissionForRole, 10)
+                                permissionId
                               );
                             } else {
                               alert("لطفاً یک مجوز انتخاب کنید.");

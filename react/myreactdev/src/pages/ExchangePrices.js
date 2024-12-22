@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ExchangePricesService from "../services/ExchangePricesService";
 import "./ExchangePrices.css"; // فایل CSS
 
 const ExchangePrices = () => {
@@ -10,11 +11,7 @@ const ExchangePrices = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/exchange-prices");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await ExchangePricesService.fetchExchangePrices();
 
       // فیلتر کردن قیمت‌های معتبر (قیمت‌هایی که عدد هستند)
       const validPrices = data.data.filter(
@@ -34,7 +31,7 @@ const ExchangePrices = () => {
         setMaxPrice(validPrices[validPrices.length - 1]);
       }
     } catch (err) {
-      setError(err.message);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -45,19 +42,14 @@ const ExchangePrices = () => {
     fetchData();
 
     // به‌روزرسانی هر 10 ثانیه
-    const intervalId = setInterval(fetchData, 10000);
+    const intervalId = setInterval(fetchData, 1000000);
 
     // پاکسازی interval در زمان unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  if (loading) {
-    return <div className="loading">در حال بارگذاری...</div>;
-  }
-
-  if (error) {
-    return <div className="error">خطا: {error}</div>;
-  }
+  if (loading) return <div className="loading">در حال بارگذاری...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container">

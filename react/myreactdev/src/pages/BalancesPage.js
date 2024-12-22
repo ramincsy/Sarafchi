@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./BalancesPage.css";
-
+import BalancesService from "../services/BalancesService";
 const BalancesPage = () => {
   const [balances, setBalances] = useState([]);
   const [summary, setSummary] = useState({
@@ -38,10 +38,7 @@ const BalancesPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://127.0.0.1:5000/api/balances/${user_id}`
-      );
-      const data = await response.json();
+      const data = await BalancesService.fetchBalances(user_id); // استفاده از BalancesService
       console.log(data);
 
       if (data.success) {
@@ -82,7 +79,6 @@ const BalancesPage = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchBalances();
   }, []);

@@ -1,17 +1,10 @@
-import React, { useState, useMemo } from "react";
-import axios from "axios";
+import React, { useState, useMemo, useEffect } from "react";
 import "./WithdrawPage.css";
 import { useTable, useGlobalFilter } from "react-table";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import CardToIban from "./CardToIban";
 import IbanInquiry from "./IbanInquiry";
-
-const mockWithdrawHistory = [
-  { id: 1, type: "تتر", amount: 200, date: "2024-12-01" },
-  { id: 2, type: "ریال", amount: 1000000, date: "2024-12-01" },
-  { id: 3, type: "تتر", amount: 300, date: "2024-12-02" },
-  { id: 4, type: "ریال", amount: 500000, date: "2024-12-02" },
-];
+import WithdrawalsService from "../services/WithdrawalsService";
 
 const WithdrawPage = () => {
   const [accountNumber, setAccountNumber] = useState("");
@@ -20,69 +13,103 @@ const WithdrawPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isTableOpen, setTableOpen] = useState(false);
+  const [withdrawHistory, setWithdrawHistory] = useState([]);
 
-  // تابع ارسال اطلاعات به سرور
-  const handleWithdraw = async () => {
-    // تابع برای خواندن user_id از localStorage
-    const getUserID = () => {
-      try {
-        const storedUserInfo = localStorage.getItem("user_info");
-        if (storedUserInfo) {
-          const { user_id } = JSON.parse(storedUserInfo);
-          return user_id;
-        }
-      } catch (err) {
-        console.error("Error reading user_id from localStorage:", err);
+  // دریافت user_id از localStorage
+  const getUserID = () => {
+    try {
+      const storedUserInfo = localStorage.getItem("user_info");
+      if (storedUserInfo) {
+        const { user_id } = JSON.parse(storedUserInfo);
+        return user_id;
       }
-      return null;
-    };
+    } catch (err) {
+      console.error("Error reading user_id from localStorage:", err);
+    }
+    return null;
+  };
+
+  // دریافت تاریخچه برداشت‌ها
+  const fetchWithdrawals = async () => {
+    try {
+      const data = await WithdrawalsService.fetchWithdrawals();
+      console.log("Data fetched from server:", data);
+      if (data.success) {
+        setWithdrawHistory(data.data);
+      } else {
+        setError(data.error || "خطا در دریافت داده‌ها");
+      }
+    } catch (err) {
+      console.error("Error fetching withdrawals:", err);
+      setError("خطا در دریافت تاریخچه برداشت.");
+    }
+  };
+
+  useEffect(() => {
+    fetchWithdrawals();
+  }, []);
+
+  // ثبت درخواست برداشت
+  const handleWithdraw = async () => {
     const user_id = getUserID();
-    console.log(user_id);
+
     if (!accountNumber || !personName || !rialAmount) {
       setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
 
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:5000/api/withdrawals",
-        {
-          UserID: user_id, // شناسه کاربر (تست)
-          Amount: rialAmount,
-          CurrencyType: "ریال",
-          IBAN: accountNumber,
-          AccountHolderName: personName,
-          WithdrawalDateTime: new Date().toISOString(),
-          Status: "Pending",
-          Description: "درخواست برداشت ریالی",
-          CreatedBy: user_id,
-        }
-      );
+    const payload = {
+      UserID: user_id,
+      Amount: rialAmount,
+      CurrencyType: "ریال",
+      IBAN: accountNumber,
+      AccountHolderName: personName,
+      WithdrawalDateTime: new Date().toISOString(),
+      Status: "Pending",
+      Description: "درخواست برداشت ریالی",
+      CreatedBy: user_id,
+      CardNumber: null,
+      WalletAddress: null,
+      TransferSource: null,
+    };
 
+    console.log("Payload to server:", payload);
+
+    try {
+      await WithdrawalsService.createWithdrawal(payload);
       setSuccess("درخواست برداشت شما با موفقیت ثبت شد.");
       setError(null);
-
-      // پاک کردن فیلدها
       setAccountNumber("");
       setPersonName("");
       setRialAmount("");
+      fetchWithdrawals();
     } catch (err) {
+      console.error("Error submitting withdrawal request:", err);
       setError("خطا در ثبت درخواست برداشت. لطفاً مجدد تلاش کنید.");
       setSuccess(null);
     }
   };
 
+  // ستون‌های جدول
   const columns = useMemo(
     () => [
-      { Header: "شناسه", accessor: "id" },
-      { Header: "نوع برداشت", accessor: "type" },
-      { Header: "مقدار", accessor: "amount" },
-      { Header: "تاریخ", accessor: "date" },
+      { Header: "شناسه", accessor: "WithdrawalID" },
+      { Header: "کاربر", accessor: "UserID" },
+      { Header: "مقدار", accessor: "Amount" },
+      { Header: "نوع ارز", accessor: "CurrencyType" },
+      { Header: "وضعیت", accessor: "Status" },
+      {
+        Header: "تاریخ",
+        accessor: "WithdrawalDateTime",
+        Cell: ({ value }) =>
+          value ? new Date(value).toLocaleString("fa-IR") : "نامشخص",
+      },
     ],
     []
   );
 
-  const data = useMemo(() => mockWithdrawHistory, []);
+  const data = useMemo(() => withdrawHistory, [withdrawHistory]);
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -95,13 +122,11 @@ const WithdrawPage = () => {
   return (
     <div className="withdraw-page">
       <h1>صفحه برداشت</h1>
-
       <div className="withdraw-container">
         <div className="left-box">
           <CardToIban />
           <IbanInquiry />
         </div>
-
         <div className="right-box">
           <h3>فرم برداشت</h3>
           <div className="form-group">
@@ -138,7 +163,6 @@ const WithdrawPage = () => {
           {success && <p style={{ color: "green" }}>{success}</p>}
         </div>
       </div>
-
       <div className="withdraw-history">
         <h2
           onClick={() => setTableOpen(!isTableOpen)}

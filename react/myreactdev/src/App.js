@@ -3,9 +3,7 @@ import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DashboardPage from "./pages/DashboardPage"; // Import the DashboardPage
-import ListUserPage from "./pages/ListUserPage";
 import CreateUser from "./pages/CreateUser";
-import EditUser from "./pages/EditUser";
 import LoginPage from "./pages/LoginPage";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -60,28 +58,12 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/user/:id/edit"
-                        element={
-                          <ProtectedRoute>
-                            <EditUser />
-                          </ProtectedRoute>
-                        }
-                      />
                       {/* Add routes for transactions */}
                       <Route
                         path="/automatic-transaction"
                         element={
                           <ProtectedRoute>
                             <AutomaticTransaction />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/listusers"
-                        element={
-                          <ProtectedRoute>
-                            <ListUserPage />
                           </ProtectedRoute>
                         }
                       />

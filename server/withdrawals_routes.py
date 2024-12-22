@@ -103,7 +103,7 @@ def get_withdrawals():
                 "CardNumber": row.CardNumber,
                 "IBAN": row.IBAN,
                 "WalletAddress": row.WalletAddress,
-                "WithdrawalDateTime": row.WithdrawalDateTime,
+                "WithdrawalDateTime": row.WithdrawalDateTime.isoformat() if row.WithdrawalDateTime else None,
                 "Description": row.Description,
                 "Status": row.Status,
                 "AccountHolderName": row.AccountHolderName,
@@ -112,4 +112,6 @@ def get_withdrawals():
             })
         return jsonify({"success": True, "data": withdrawals}), 200
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        import traceback
+        error_details = traceback.format_exc()
+        return jsonify({"success": False, "error": str(e), "details": error_details}), 500

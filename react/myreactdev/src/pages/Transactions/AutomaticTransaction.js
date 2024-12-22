@@ -9,7 +9,7 @@ import {
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 import AuthContext from "../../contexts/AuthContext";
-
+import ApiManager from "../../services/ApiManager"; // استفاده از ApiManager
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => {
   const [value, setValue] = useState(globalFilter);
   const onChange = useAsyncDebounce((value) => {
@@ -58,32 +58,19 @@ const AutomaticTransaction = () => {
     const fetchPrice = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/live-price?currency=${currency}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch price.");
-        const data = await response.json();
-        if (data.success) {
-          setPrice(data.price);
-        } else {
-          throw new Error("Price not available");
-        }
+        const data = await ApiManager.TransactionsService.fetchPrice(currency); // استفاده از ApiManager
+        setPrice(data.price);
       } catch (error) {
-        console.error("Error fetching price:", error);
         setPrice(null);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPrice();
   }, [currency]);
-
   const fetchTransactions = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/transactions");
-      if (!response.ok) throw new Error("Failed to fetch transactions.");
-      const data = await response.json();
+      const data = await ApiManager.TransactionsService.fetchTransactions(); // استفاده از ApiManager
       setTransactions(
         data.map((transaction) => ({
           id: transaction.TransactionID,
@@ -98,7 +85,7 @@ const AutomaticTransaction = () => {
         }))
       );
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error(error);
     }
   };
 
@@ -119,33 +106,22 @@ const AutomaticTransaction = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const transactionData = {
-      UserID: currentUserID || 1, // از user_id کاربر استفاده کنید، در صورت نبود مقدار 1
+      UserID: userInfo?.user_id || 1,
       Quantity: parseFloat(quantity),
       Price: parseFloat(price),
-      TransactionType: "معامله اتوماتیک",
-      Position: transactionType === "buy" ? "Buy" : "Sell",
+      TransactionType: "Automatic",
+      Position: transactionType === "buy" ? "Buy" : "Sell", // اضافه کردن Position
       CurrencyType: currency,
-      CreatedBy: createdBy,
+      CreatedBy: currentUserID,
     };
 
-    console.log("Sending transaction data:", transactionData);
-
     try {
-      const response = await fetch("http://localhost:5000/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(transactionData),
-      });
-
-      if (!response.ok) throw new Error("Failed to save transaction.");
+      await ApiManager.TransactionsService.createTransaction(transactionData);
       alert("تراکنش با موفقیت ثبت شد");
       setQuantity("");
       setTotal(null);
       fetchTransactions();
     } catch (error) {
-      console.error("Error saving transaction:", error);
       alert("خطا در ثبت تراکنش");
     }
   };
