@@ -1,5 +1,5 @@
 // src/services/WithdrawalsService.js
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "utils/axiosInstance";
 
 const WithdrawalsService = {
   createWithdrawal: async (payload) => {

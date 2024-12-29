@@ -1,12 +1,29 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import AuthContext from "../contexts/AuthContext";
-import UserService from "../services/UserService";
-import "./CreateUser.css";
+import {
+  Box,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Modal,
+  TextField,
+  Grid,
+  useTheme,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import AuthContext from "contexts/AuthContext";
+import UserService from "services/UserService";
 
 export default function ManageUsers() {
-  const navigate = useNavigate();
+  const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
 
   const [inputs, setInputs] = useState({
@@ -19,11 +36,9 @@ export default function ManageUsers() {
     walletAddress: "",
   });
   const [users, setUsers] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
   const [editingUser, setEditingUser] = useState(null);
-  const [showModal, setShowModal] = useState(false); // کنترل نمایش مودال
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // واکشی لیست کاربران
   const fetchUsers = async () => {
     try {
       const data = await UserService.fetchUsers();
@@ -37,16 +52,13 @@ export default function ManageUsers() {
     fetchUsers();
   }, []);
 
-  // مدیریت تغییر ورودی‌ها
   const handleChange = (event) => {
     const { name, value } = event.target;
     setInputs((prevInputs) => ({ ...prevInputs, [name]: value }));
   };
 
-  // افزودن یا ویرایش کاربر
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     const userPayload = {
       FirstName: inputs.firstName,
       LastName: inputs.lastName,
@@ -60,7 +72,6 @@ export default function ManageUsers() {
 
     try {
       if (editingUser) {
-        console.log("Editing User:", editingUser);
         await UserService.updateUser(editingUser.ID, userPayload);
         alert("کاربر با موفقیت ویرایش شد");
       } else {
@@ -78,13 +89,12 @@ export default function ManageUsers() {
       });
       setEditingUser(null);
       fetchUsers();
-      setShowModal(false);
+      setModalOpen(false);
     } catch (error) {
       alert(`خطا در ذخیره کاربر: ${error}`);
     }
   };
 
-  // حذف کاربر
   const handleDelete = async (id) => {
     if (window.confirm("آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟")) {
       try {
@@ -97,7 +107,6 @@ export default function ManageUsers() {
     }
   };
 
-  // شروع ویرایش
   const handleEdit = (user) => {
     setEditingUser(user);
     setInputs({
@@ -106,173 +115,183 @@ export default function ManageUsers() {
       nationalID: user.NationalID,
       phoneNumber: user.PhoneNumber,
       email: user.Email,
-      password: "", // نمی‌توان رمز عبور را پر کرد
+      password: "",
       walletAddress: user.WalletAddress,
     });
-    setShowModal(true); // نمایش مودال
+    setModalOpen(true);
   };
 
   return (
-    <div className="container h-100">
-      <div className="row">
-        <div className="col-12">
-          <h1>مدیریت کاربران</h1>
-          <button
-            className="btn btn-primary mb-4"
-            onClick={() => {
-              setEditingUser(null);
-              setInputs({
-                firstName: "",
-                lastName: "",
-                nationalID: "",
-                phoneNumber: "",
-                email: "",
-                password: "",
-                walletAddress: "",
-              });
-              setShowModal(true); // نمایش مودال
-            }}
-          >
-            ایجاد کاربر جدید
-          </button>
-          <div className="table-responsive">
-            <table className="table table-striped">
-              <thead>
-                <tr>
-                  <th>نام</th>
-                  <th>نام خانوادگی</th>
-                  <th>ایمیل</th>
-                  <th>شماره تلفن</th>
-                  <th>کد ملی</th>
-                  <th>عملیات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.ID}>
-                    <td>{user.FirstName}</td>
-                    <td>{user.LastName}</td>
-                    <td>{user.Email}</td>
-                    <td>{user.PhoneNumber}</td>
-                    <td>{user.NationalID}</td>
-                    <td>
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        onClick={() => handleEdit(user)}
-                      >
-                        ویرایش
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(user.ID)}
-                      >
-                        حذف
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <Box sx={{ padding: 2 }}>
+      <Typography variant="h4" gutterBottom>
+        مدیریت کاربران
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={() => {
+          setEditingUser(null);
+          setInputs({
+            firstName: "",
+            lastName: "",
+            nationalID: "",
+            phoneNumber: "",
+            email: "",
+            password: "",
+            walletAddress: "",
+          });
+          setModalOpen(true);
+        }}
+      >
+        ایجاد کاربر جدید
+      </Button>
+      <TableContainer component={Paper} sx={{ marginTop: 3 }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>نام</TableCell>
+              <TableCell>نام خانوادگی</TableCell>
+              <TableCell>ایمیل</TableCell>
+              <TableCell>شماره تلفن</TableCell>
+              <TableCell>کد ملی</TableCell>
+              <TableCell align="center">عملیات</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.ID}>
+                <TableCell>{user.FirstName}</TableCell>
+                <TableCell>{user.LastName}</TableCell>
+                <TableCell>{user.Email}</TableCell>
+                <TableCell>{user.PhoneNumber}</TableCell>
+                <TableCell>{user.NationalID}</TableCell>
+                <TableCell align="center">
+                  <IconButton color="primary" onClick={() => handleEdit(user)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDelete(user.ID)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Modal for User Form */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>{editingUser ? "ویرایش کاربر" : "ایجاد کاربر جدید"}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label>نام</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="firstName"
-                  value={inputs.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label>نام خانوادگی</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="lastName"
-                  value={inputs.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label>کد ملی</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="nationalID"
-                  value={inputs.nationalID}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label>شماره تلفن</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="phoneNumber"
-                  value={inputs.phoneNumber}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label>ایمیل</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={inputs.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label>رمز عبور</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  name="password"
-                  value={inputs.password}
-                  onChange={handleChange}
-                  required={!editingUser}
-                />
-              </div>
-              <div className="mb-3">
-                <label>آدرس کیف پول</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="walletAddress"
-                  value={inputs.walletAddress}
-                  onChange={handleChange}
-                />
-              </div>
-              <button type="submit" className="btn btn-primary">
-                {editingUser ? "ذخیره تغییرات" : "ایجاد کاربر"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary ms-2"
-                onClick={() => setShowModal(false)}
-              >
-                بستن
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            {editingUser ? "ویرایش کاربر" : "ایجاد کاربر جدید"}
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="نام"
+                name="firstName"
+                value={inputs.firstName}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="نام خانوادگی"
+                name="lastName"
+                value={inputs.lastName}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="کد ملی"
+                name="nationalID"
+                value={inputs.nationalID}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="شماره تلفن"
+                name="phoneNumber"
+                value={inputs.phoneNumber}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="ایمیل"
+                name="email"
+                type="email"
+                value={inputs.email}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="رمز عبور"
+                name="password"
+                type="password"
+                value={inputs.password}
+                onChange={handleChange}
+                fullWidth
+                required={!editingUser}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="آدرس کیف پول"
+                name="walletAddress"
+                value={inputs.walletAddress}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}
+          >
+            <Button type="submit" variant="contained" color="primary">
+              {editingUser ? "ذخیره تغییرات" : "ایجاد کاربر"}
+            </Button>
+            <Button
+              onClick={() => setModalOpen(false)}
+              variant="outlined"
+              color="secondary"
+              sx={{ marginLeft: 1 }}
+            >
+              بستن
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </Box>
   );
 }

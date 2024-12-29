@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-import "./PageManager.css";
-import PagesService from "../services/PagesService";
+import "assets/styles/PageManager.css";
+import PagesService from "services/PagesService";
 
 const PageManager = () => {
   const [pages, setPages] = useState([]);

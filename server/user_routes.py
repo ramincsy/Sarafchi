@@ -120,15 +120,33 @@ def refresh():
 
 
 @user_bp.route('/logout', methods=['POST'])
-@jwt_required(refresh=True)
 def logout():
-    current_user = get_jwt_identity()
-    JwtTokens.query.filter_by(UserId=current_user).update({"Revoked": True})
-    db.session.commit()
+    try:
+        # دریافت توکن از body
+        data = request.get_json()
+        refresh_token = data.get('refresh_token')
 
-    response = jsonify({'message': 'Logged out successfully'})
-    response.set_cookie('refresh_token', '', expires=0)
-    return response, 200
+        if not refresh_token:
+            return jsonify({'message': 'Refresh token is required'}), 400
+
+        # به‌روزرسانی وضعیت توکن در پایگاه داده
+        token_in_db = JwtTokens.query.filter_by(RefreshToken=refresh_token, Revoked=False).first()
+        if not token_in_db:
+            return jsonify({'message': 'Invalid refresh token'}), 401
+
+        token_in_db.Revoked = True
+        db.session.commit()
+
+       
+        # حذف کوکی `refresh_token`
+        response = jsonify({'message': 'Logged out successfully', 'clear_local_storage': True})
+        response.set_cookie('refresh_token', '', expires=0, httponly=True, samesite='Strict', secure=True)
+
+        return response, 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error during logout', 'error': str(e)}), 500
 
 
 @user_bp.route('/listusers', methods=['GET'])
@@ -207,3 +225,59 @@ def userdelete(user_id):
         return jsonify({"message": "کاربر با موفقیت حذف شد"}), 200
     except Exception as e:
         return jsonify({"error": f"خطا در حذف کاربر: {str(e)}"}), 400
+
+
+@user_bp.route('/userdetails/<int:user_id>', methods=['GET'])
+def get_user_details(user_id):
+    """
+    دریافت اطلاعات کامل کاربر با استفاده از استور پروسیجر spGetUserDetails
+    """
+    try:
+        # اجرای استور پروسیجر برای دریافت اطلاعات کاربر
+        result = db.session.execute(
+            text("EXEC spGetUserDetails @UserID=:UserID"),
+            {"UserID": user_id}
+        ).fetchall()
+
+        # تبدیل داده‌های بازگشتی به قالب مناسب
+        user_details = [dict(row._mapping) for row in result]
+
+        if not user_details:
+            return jsonify({"message": "کاربر یافت نشد"}), 404
+
+        # تفکیک اطلاعات
+        user_info = {
+            "UserID": user_details[0].get("UserID"),
+            "FirstName": user_details[0].get("FirstName"),
+            "LastName": user_details[0].get("LastName"),
+            "Email": user_details[0].get("Email"),
+            "PhoneNumber": user_details[0].get("PhoneNumber"),
+            "NationalID": user_details[0].get("NationalID"),
+            "WalletAddress": user_details[0].get("WalletAddress"),
+            "DateCreated": user_details[0].get("DateCreated"),
+            "Roles": [],
+            "Permissions": [],
+            "Pages": []
+        }
+
+        # جمع‌آوری داده‌ها
+        roles_set = set()
+        permissions_set = set()
+        pages_set = set()
+
+        for row in user_details:
+            if row.get("RoleName"):
+                roles_set.add(row["RoleName"])
+            if row.get("PermissionName"):
+                permissions_set.add(row["PermissionName"])
+            if row.get("PageName"):
+                pages_set.add(row["PageName"])
+
+        user_info["Roles"] = list(roles_set)
+        user_info["Permissions"] = list(permissions_set)
+        user_info["Pages"] = list(pages_set)
+
+        return jsonify(user_info), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

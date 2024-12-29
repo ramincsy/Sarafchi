@@ -1,5 +1,5 @@
 // src/services/AdminDashboardService.js
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "utils/axiosInstance";
 
 const AdminDashboardService = {
   fetchWithdrawals: async () => {

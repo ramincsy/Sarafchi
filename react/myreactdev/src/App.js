@@ -1,35 +1,51 @@
 // src/App.js
 import React from "react";
-import "./App.css";
+import "./assets/styles/index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import DashboardPage from "./pages/DashboardPage"; // Import the DashboardPage
-import CreateUser from "./pages/CreateUser";
-import LoginPage from "./pages/LoginPage";
-import Layout from "./components/Layout";
-import { AuthProvider } from "./contexts/AuthContext";
-import { DarkModeProvider } from "./components/DarkModeContext"; // Import DarkModeProvider
-import ProtectedRoute from "./components/ProtectedRoute";
-
+import CreateUser from "pages/CreateUser";
+import LoginPage from "pages/Auth/LoginPage";
+import Layout from "components/layout/Layout";
+import { AuthProvider } from "contexts/AuthContext";
+import ProtectedRoute from "components/common/ProtectedRoute";
+import DashboardPage from "pages/Dashboards/DashboardPage";
 // Import pages for transactions
-import AutomaticTransaction from "./pages/Transactions/AutomaticTransaction";
-import SuggestedTransaction from "./pages/Transactions/SuggestedTransaction";
-import LiveTransaction from "./pages/Transactions/LiveTransaction";
-import BalancesPage from "./pages/BalancesPage"; // Import the BalancesPage
-import DepositPage from "./pages/DepositPage";
-import AdminDashboard from "./pages/AdminDashboard";
-import ExchangePrices from "./pages/ExchangePrices";
-import JibitPage from "./pages/JibitPage";
-import WithdrawPage from "./pages/WithdrawPage";
-import AllTransactionsPage from "./pages/AllTransactionsPage";
-import AllWithdrawalsPage from "./pages/AllWithdrawalsPage";
-import RolesPermissionsManager from "./pages/RolesPermissionsManager";
-import PageManager from "./pages/PageManager";
-import { PermissionsProvider } from "./contexts/PermissionsContext";
-import UnauthorizedPage from "../src/pages/UnauthorizedPage";
+import AutomaticTransaction from "pages/Transactions/AutomaticTransaction";
+import SuggestedTransaction from "pages/Transactions/SuggestedTransaction";
+import LiveTransaction from "pages/Transactions/LiveTransaction";
+import BalancesPage from "pages/Balances/BalancesPage"; // Import the BalancesPage
+import DepositPage from "pages/Deposit/DepositPage";
+import AdminDashboard from "pages/Dashboards/AdminDashboard";
+import ExchangePrices from "pages/ExchangePrices/ExchangePrices";
+import JibitPage from "pages/Jibit/JibitPage";
+import WithdrawPage from "pages/Withdrawals/WithdrawPage";
+import AllTransactionsPage from "pages/Transactions/AllTransactionsPage";
+import AllWithdrawalsPage from "pages/Withdrawals/AllWithdrawalsPage";
+import RolesPermissionsManager from "pages/RolesPermissionsManager";
+import PageManager from "pages/PageManager";
+import { PermissionsProvider } from "contexts/PermissionsContext";
+import UnauthorizedPage from "pages/Auth/UnauthorizedPage";
+import ProfilePage from "pages/Profile/ProfilePage";
+import { DarkModeProvider, useDarkMode } from "contexts/DarkModeContext"; // Import DarkModeProvider and useDarkMode
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { lightTheme, darkTheme } from "themes/themes";
+import RoleManagement from "pages/RoleManagement";
+import PermissionManagement from "pages/PermissionManagement";
+import UserRoleManagement from "pages/UserRoleManagement";
 function App() {
   return (
-    <AuthProvider>
-      <DarkModeProvider>
+    <DarkModeProvider>
+      <MainApp />
+    </DarkModeProvider>
+  );
+}
+function MainApp() {
+  const { mode } = useDarkMode(); // حالا اینجا کار می‌کند زیرا DarkModeProvider بالای آن است
+  const theme = mode === "light" ? lightTheme : darkTheme;
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
         <PermissionsProvider>
           <BrowserRouter>
             <Routes>
@@ -165,12 +181,44 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/ProfilePage"
+                        element={
+                          <ProtectedRoute>
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        }
+                      />
                       {/* Fallback route for unmatched paths */}
                       <Route
                         path="*"
                         element={
                           <ProtectedRoute>
                             <DashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/RoleManagement"
+                        element={
+                          <ProtectedRoute>
+                            <RoleManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/PermissionManagement"
+                        element={
+                          <ProtectedRoute>
+                            <PermissionManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/UserRoleManagement"
+                        element={
+                          <ProtectedRoute>
+                            <UserRoleManagement />
                           </ProtectedRoute>
                         }
                       />
@@ -181,8 +229,8 @@ function App() {
             </Routes>
           </BrowserRouter>
         </PermissionsProvider>
-      </DarkModeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

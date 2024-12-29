@@ -1,5 +1,5 @@
 // src/services/TransactionService.js
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "utils/axiosInstance";
 
 const TransactionService = {
   fetchPrice: async (currency) => {

@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "assets/*": ["assets/*"],
+      "assets/styles/*": ["assets/styles/*"],
+      "assets/styles/images/*": ["assets/styles/images/*"],
+      "components/*": ["components/*"],
+      "components/common/*": ["components/common/*"],
+      "components/common/jibit/*": ["components/common/jibit/*"],
+      "components/layout/*": ["components/layout/*"],
+      "components/tables/*": ["components/tables/*"],
+      "contexts/*": ["contexts/*"],
+      "hooks/*": ["hooks/*"],
+      "pages/*": ["pages/*"],
+      "pages/Auth/*": ["pages/Auth/*"],
+      "pages/Balances/*": ["pages/Balances/*"],
+      "pages/Dashboards/*": ["pages/Dashboards/*"],
+      "pages/Deposit/*": ["pages/Deposit/*"],
+      "pages/ExchangePrices/*": ["pages/ExchangePrices/*"],
+      "pages/Jibit/*": ["pages/Jibit/*"],
+      "pages/Profile/*": ["pages/Profile/*"],
+      "pages/Transactions/*": ["pages/Transactions/*"],
+      "pages/Withdrawals/*": ["pages/Withdrawals/*"],
+      "services/*": ["services/*"],
+      "utils/*": ["utils/*"],
+      "themes/*": ["themes/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build"]
+}

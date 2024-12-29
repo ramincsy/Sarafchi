@@ -1,4 +1,4 @@
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "utils/axiosInstance";
 
 const UserService = {
   login: async (email, password) => {
@@ -45,6 +45,31 @@ const UserService = {
     } catch (error) {
       console.error("Error updating user:", error);
       throw error.response?.data?.error || "Failed to update user.";
+    }
+  },
+  getUserDetails: async (userId) => {
+    try {
+      const response = await axiosInstance.get(`/userdetails/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      throw error.response?.data?.error || "Failed to fetch user details.";
+    }
+  },
+  logout: async () => {
+    try {
+      const refreshToken = localStorage.getItem("refresh_token"); // دریافت توکن از لوکال استوریج
+      if (!refreshToken) {
+        throw new Error("Refresh token not found");
+      }
+
+      const response = await axiosInstance.post("/logout", {
+        refresh_token: refreshToken,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error during logout:", error);
+      throw error.response?.data?.error || "Failed to logout.";
     }
   },
 
