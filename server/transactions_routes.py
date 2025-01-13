@@ -34,7 +34,7 @@ transactions_schema = TransactionSchema(many=True)
 @transactions_bp.route('/transactions', methods=['POST'])
 def create_transaction():
     data = request.json
-    print("Data received in create_transaction:", data)
+   
     try:
         with db.session.begin():
             result = db.session.execute(text("""
@@ -71,9 +71,7 @@ def create_transaction():
             return jsonify({"message": "Transaction created but no ID returned"}), 201
 
     except Exception as e:
-        print("Error while creating transaction:", str(e))
-        print("Traceback:")
-        print(traceback.format_exc())
+       
         return jsonify({"error": str(e)}), 400
 
 # واکشی تمامی تراکنش‌ها
@@ -96,11 +94,10 @@ def confirm_transaction(transaction_id):
                 text("EXEC spConfirmTransaction @TransactionID=:transaction_id"),
                 {"transaction_id": transaction_id}
             )
-            print("Result from spConfirmTransaction:", result.rowcount)
+           
         return jsonify({"success": True, "message": "Transaction confirmed."}), 200
     except Exception as e:
-        print(f"Error confirming transaction ID {transaction_id}: {str(e)}")
-        print("Traceback:", traceback.format_exc())
+     
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -117,6 +114,5 @@ def cancel_transaction(transaction_id):
             print(f"Rows affected: {result.rowcount}")
         return jsonify({"success": True, "message": "Transaction canceled successfully."}), 200
     except Exception as e:
-        print(f"Error canceling transaction ID {transaction_id}: {str(e)}")
-        print("Traceback:", traceback.format_exc())
+      
         return jsonify({"success": False, "error": f"SQL Error: {str(e)}"}), 500

@@ -8,11 +8,11 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Grid,
   Paper,
 } from "@mui/material";
-import AuthContext from "../../contexts/AuthContext";
-import UserService from "../../services/UserService";
+import AuthContext from "contexts/AuthContext";
+import { getOrCreateUUID } from "utils/uuidManager"; // استفاده از تابع مرکزی
+import { getIPAddress } from "utils/ipHelper"; // فایل کمکی برای دریافت IP
 import Avatar from "@mui/material/Avatar";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
@@ -22,7 +22,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { setAuthToken, setUserInfo } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // استفاده از متد login از AuthContext
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,115 +30,83 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const data = await UserService.login(email, password);
+      const deviceId = getOrCreateUUID();
+      const ipAddress = await getIPAddress();
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      localStorage.setItem(
-        "user_info",
-        JSON.stringify({
-          user_id: data.user_id,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          email: data.email,
-          roles: data.roles,
-          permissions: data.permissions,
-          pages: data.pages,
-        })
-      );
-
-      setAuthToken(data.access_token);
-      setUserInfo({
-        user_id: data.user_id,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        roles: data.roles,
-        permissions: data.permissions,
-        pages: data.pages,
+      console.log("Device ID:", deviceId);
+      console.log("IP Address:", ipAddress);
+      console.log("Request Body:", {
+        email,
+        password,
+        device_id: deviceId,
+        ip_address: ipAddress,
       });
 
-      navigate("/");
+      await login(email, password, ipAddress, deviceId); // استفاده از متد login از AuthContext
+
+      console.log("Login successful. Navigating to dashboard...");
+      navigate("/adminDashboard");
     } catch (err) {
-      setError(err || "مشکلی در ورود رخ داده است. لطفاً دوباره تلاش کنید.");
+      console.error("Login failed:", err);
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          "مشکلی در ورود رخ داده است. لطفاً دوباره تلاش کنید."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        {/* اضافه کردن آیکون و نام سایت */}
-        <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5" gutterBottom>
-          صرافچی
-        </Typography>
-        <Paper elevation={3} sx={{ padding: 4, width: "100%", mt: 2 }}>
-          <Typography component="h2" variant="h6" align="center" gutterBottom>
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Box display="flex" flexDirection="column" alignItems="center">
+          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5">
             ورود
           </Typography>
-          <Box
-            component="form"
-            onSubmit={handleLogin}
-            noValidate
-            sx={{ mt: 1 }}
+        </Box>
+        <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="ایمیل"
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="رمز عبور"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <Alert severity="error">{error}</Alert>}
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            sx={{ mt: 3, mb: 2 }}
+            disabled={isLoading}
           >
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="ایمیل"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="رمز عبور"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            )}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "white" }} />
-              ) : (
-                "ورود"
-              )}
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
+            {isLoading ? <CircularProgress size={24} /> : "ورود"}
+          </Button>
+        </Box>
+      </Paper>
     </Container>
   );
 };

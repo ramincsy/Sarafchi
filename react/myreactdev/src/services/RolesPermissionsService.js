@@ -42,7 +42,12 @@ const RolesPermissionsService = {
       const response = await axiosInstance.get(
         "/RolesPermissionsManager/roles/permissions"
       );
-      return response.data;
+      const rolesData = Array.isArray(response.data) ? response.data : [];
+      return rolesData.map((role) => ({
+        RoleID: role.RoleID,
+        RoleName: role.RoleName,
+        Permissions: role.Permissions || [],
+      }));
     } catch (error) {
       console.error("Error fetching roles with permissions:", error);
       throw (
@@ -157,102 +162,6 @@ const RolesPermissionsService = {
     } catch (error) {
       console.error("Error deleting permission:", error);
       throw error.response?.data?.error || "Failed to delete permission.";
-    }
-  },
-  assignPermissionToRole: async (roleId, permissionId) => {
-    try {
-      const response = await axiosInstance.post(
-        `/RolesPermissionsManager/roles/${roleId}/permissions`,
-        { PermissionID: permissionId }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error assigning permission to role:", error);
-      throw (
-        error.response?.data?.error || "Failed to assign permission to role."
-      );
-    }
-  },
-
-  assignRoleToUser: async (userId, roleId) => {
-    try {
-      const response = await axiosInstance.post(
-        `/RolesPermissionsManager/users/${userId}/roles`,
-        { RoleID: roleId }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error assigning role to user:", error);
-      throw error.response?.data?.error || "Failed to assign role to user.";
-    }
-  },
-
-  removePermissionFromRole: async (roleId, permissionId) => {
-    try {
-      const response = await axiosInstance.delete(
-        `/RolesPermissionsManager/roles/${roleId}/permissions/${permissionId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error removing permission from role:", error);
-      throw (
-        error.response?.data?.error || "Failed to remove permission from role."
-      );
-    }
-  },
-
-  deleteRole: async (roleId) => {
-    try {
-      const response = await axiosInstance.delete(
-        `/RolesPermissionsManager/roles/${roleId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting role:", error);
-      throw error.response?.data?.error || "Failed to delete role.";
-    }
-  },
-
-  deletePermission: async (permissionId) => {
-    try {
-      const response = await axiosInstance.delete(
-        `/RolesPermissionsManager/permissions/${permissionId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting permission:", error);
-      throw error.response?.data?.error || "Failed to delete permission.";
-    }
-  },
-
-  removeRoleFromUser: async (userId, roleId) => {
-    try {
-      const response = await axiosInstance.delete(
-        `/RolesPermissionsManager/users/${userId}/roles/${roleId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error removing role from user:", error);
-      throw error.response?.data?.error || "Failed to remove role from user.";
-    }
-  },
-
-  fetchRolesWithPermissions: async () => {
-    try {
-      const response = await axiosInstance.get(
-        "/RolesPermissionsManager/roles/permissions"
-      );
-      const rolesData = Array.isArray(response.data) ? response.data : [];
-      return rolesData.map((role) => ({
-        RoleID: role.RoleID,
-        RoleName: role.RoleName,
-        Permissions: role.Permissions || [],
-      }));
-    } catch (error) {
-      console.error("Error fetching roles with permissions:", error);
-      throw (
-        error.response?.data?.error || "Failed to fetch roles with permissions."
-      );
     }
   },
 

@@ -1,13 +1,18 @@
-// src/pages/UnauthorizedPage.js
-import React from "react";
+import { useLocation } from "react-router-dom";
 
-const UnauthorizedPage = () => {
+const Unauthorized = () => {
+  const location = useLocation();
+  const userInfo = location.state?.userInfo || {};
+
+  const userId = userInfo?.UserID || "Unknown User";
+
   return (
     <div>
-      <h1>دسترسی غیرمجاز</h1>
-      <p>شما اجازه دسترسی به این صفحه را ندارید.</p>
+      <h1>Unauthorized Access</h1>
+      <p>User ID: {userId}</p>
+      <pre>{JSON.stringify(userInfo, null, 2)}</pre>
     </div>
   );
 };
 
-export default UnauthorizedPage;
+export default Unauthorized;

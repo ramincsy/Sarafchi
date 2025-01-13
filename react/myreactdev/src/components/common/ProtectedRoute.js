@@ -1,74 +1,95 @@
-// src/components/ProtectedRoute.js
 import React, { useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import AuthContext from "../../contexts/AuthContext";
+import AuthContext from "contexts/AuthContext";
+import { tokenManager } from "utils/tokenManager";
+
+const hasPageAccess = (userInfo, currentPage) => {
+  const userRoles = (userInfo.Roles || []).map((role) =>
+    role.RoleName.trim().toLowerCase()
+  );
+  const userPermissions = (userInfo.Permissions || []).map((perm) =>
+    perm.PermissionName.trim().toLowerCase()
+  );
+  const pageRoles = (currentPage?.RoleName?.split(",") || []).map((role) =>
+    role.trim().toLowerCase()
+  );
+  const pagePermissions = (currentPage?.PermissionName?.split(",") || []).map(
+    (perm) => perm.trim().toLowerCase()
+  );
+
+  const roleAccess =
+    pageRoles.length === 0 ||
+    pageRoles.some((role) => userRoles.includes(role));
+  const permissionAccess =
+    pagePermissions.length === 0 ||
+    pagePermissions.some((perm) => userPermissions.includes(perm));
+
+  return roleAccess && permissionAccess;
+};
 
 const ProtectedRoute = ({ children }) => {
-  const { authToken } = useContext(AuthContext);
+  const { authToken, userInfo, logout } = useContext(AuthContext);
   const location = useLocation();
-  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("Current location pathname (useEffect):", location.pathname);
-    // دریافت اطلاعات کاربر از localStorage
-    const storedUser = JSON.parse(localStorage.getItem("user_info"));
+    const validateSession = async () => {
+      try {
+        const token = tokenManager.getAccessToken();
 
-    if (storedUser) {
-      setUser(storedUser);
-    }
-    setIsLoading(false);
-  }, []);
+        if (!token || !tokenManager.isTokenValid(token)) {
+          console.warn("Token is invalid. Redirecting to login...");
+          logout();
+          return;
+        }
 
-  // در حال بارگذاری داده‌ها
+        if (tokenManager.isTokenNearExpiry()) {
+          console.log("Token near expiry. Checking for active refresh...");
+          if (!tokenManager.isRefreshing) {
+            console.log("Refreshing token...");
+            await tokenManager.refreshAccessToken();
+          } else {
+            console.warn("Token refresh already in progress. Waiting...");
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // انتظار کوتاه
+          }
+        }
+      } catch (error) {
+        console.error("Error validating session:", error);
+        logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateSession();
+  }, [logout]);
+
   if (isLoading) {
-    return <div>در حال بارگذاری...</div>;
+    console.log("Loading session validation...");
+    return <div>در حال بررسی دسترسی...</div>;
   }
 
-  // بررسی توکن احراز هویت
-  if (!authToken && !localStorage.getItem("access_token")) {
+  if (error || !authToken || !userInfo) {
+    console.error("User session invalid. Redirecting to login...");
     return <Navigate to="/login" replace />;
   }
 
-  // یافتن اطلاعات صفحه جاری
-  console.log("Current location pathname:", location.pathname);
-  console.log("User pages:", user.pages);
-
-  const currentPage = user?.pages?.find((page) =>
-    location.pathname.startsWith(page.PageURL)
+  const currentPage = userInfo.Pages.find(
+    (page) => location.pathname.toLowerCase() === page.PageURL.toLowerCase()
   );
 
   if (!currentPage) {
-    console.error("صفحه مورد نظر یافت نشد:", location.pathname);
+    console.error(`Page not found for: ${location.pathname}`);
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // بررسی نقش‌ها و مجوزهای کاربر
-  const userRoles = user?.roles || [];
-  const userPermissions = user?.permissions || [];
-  const pageRoles = currentPage.Roles?.split(", ") || [];
-  const pagePermissions = currentPage.Permissions?.split(", ") || [];
-
-  const hasRoleAccess =
-    pageRoles.length === 0 ||
-    pageRoles.some((role) => userRoles.includes(role));
-
-  const hasPermissionAccess =
-    pagePermissions.length === 0 ||
-    pagePermissions.some((permission) => userPermissions.includes(permission));
-
-  console.log("User roles:", userRoles);
-  console.log("User permissions:", userPermissions);
-  console.log("Page roles:", pageRoles);
-  console.log("Page permissions:", pagePermissions);
-
-  if (!hasRoleAccess) {
-    console.error("User lacks role access for page:", pageRoles);
-  }
-  if (!hasPermissionAccess) {
-    console.error("User lacks permission access for page:", pagePermissions);
+  if (!hasPageAccess(userInfo, currentPage)) {
+    console.error(`Access denied for user to: ${location.pathname}`);
+    return <Navigate to="/unauthorized" replace />;
   }
 
+  console.log(`Access granted to: ${location.pathname}`);
   return children;
 };
 

@@ -144,10 +144,19 @@ WithdrawalsRow.propTypes = {
 };
 
 export default function WithdrawalsTable({
-  title,
-  showApproveButton,
-  showRejectButton,
-  visibleColumns,
+  title = "",
+  showApproveButton = true,
+  showRejectButton = true,
+  visibleColumns = [
+    "user",
+    "amount",
+    "currency",
+    "iban",
+    "accountHolder",
+    "date",
+    "status",
+    "actions",
+  ],
 }) {
   const [withdrawals, setWithdrawals] = useState([]);
   const [error, setError] = useState(null);
@@ -275,20 +284,4 @@ WithdrawalsTable.propTypes = {
   showApproveButton: PropTypes.bool,
   showRejectButton: PropTypes.bool,
   visibleColumns: PropTypes.array.isRequired,
-};
-
-WithdrawalsTable.defaultProps = {
-  title: "",
-  showApproveButton: true,
-  showRejectButton: true,
-  visibleColumns: [
-    "user",
-    "amount",
-    "currency",
-    "iban",
-    "accountHolder",
-    "date",
-    "status",
-    "actions",
-  ],
 };

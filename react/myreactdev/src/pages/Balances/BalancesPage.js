@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Grid,
@@ -9,7 +9,7 @@ import {
   useTheme,
 } from "@mui/material";
 import BalancesService from "services/BalancesService";
-
+import AuthContext from "contexts/AuthContext";
 const BalancesPage = () => {
   const theme = useTheme();
   const [balances, setBalances] = useState([]);
@@ -22,21 +22,11 @@ const BalancesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getUserID = () => {
-    try {
-      const storedUserInfo = localStorage.getItem("user_info");
-      if (storedUserInfo) {
-        const { user_id } = JSON.parse(storedUserInfo);
-        return user_id;
-      }
-    } catch (err) {
-      console.error("Error reading user_id from localStorage:", err);
-    }
-    return null;
-  };
+  const { userInfo } = useContext(AuthContext);
+  const getCurrentUserID = userInfo?.UserID;
 
   const fetchBalances = async () => {
-    const user_id = getUserID();
+    const user_id = getCurrentUserID;
 
     if (!user_id) {
       setError("User ID not found. Please log in.");

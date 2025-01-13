@@ -1,47 +1,59 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Grid, useTheme } from "@mui/material"; // اضافه کردن useTheme
+import React, { useState, useEffect, useContext } from "react";
+import {
+  Box,
+  Typography,
+  Grid,
+  useTheme,
+  CircularProgress,
+} from "@mui/material";
+import ApiManager from "services/ApiManager"; // وارد کردن ApiManager
+import AuthContext from "contexts/AuthContext";
 
 const SubHeader = () => {
-  const theme = useTheme(); // دسترسی به تم
-  const getUserID = () => {
-    try {
-      const storedUserInfo = localStorage.getItem("user_info");
-      if (storedUserInfo) {
-        const { user_id } = JSON.parse(storedUserInfo);
-        return user_id;
-      }
-    } catch (err) {
-      console.error("Error reading user_id from localStorage:", err);
-    }
-    return null;
-  };
-
-  const currentUserID = getUserID();
+  const theme = useTheme();
   const [balances, setBalances] = useState({
     USD: 0,
     EUR: 0,
     IRR: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // دریافت userInfo از AuthContext
+  const { userInfo } = useContext(AuthContext);
+  const userID = userInfo?.UserID;
 
   useEffect(() => {
-    if (currentUserID) {
-      fetch(`http://localhost:5000/api/balances/${currentUserID}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.balances)) {
-            const apiBalances = data.balances;
-            setBalances({
-              USD: getNetBalance(apiBalances, "USD"),
-              EUR: getNetBalance(apiBalances, "EUR"),
-              IRR: getNetBalance(apiBalances, "IRR"),
-            });
-          } else {
-            console.error("Unexpected API response structure:", data);
-          }
-        })
-        .catch((error) => console.error("Error fetching balances:", error));
+    if (userID) {
+      fetchBalances(userID);
+    } else {
+      setError("شناسه کاربر یافت نشد.");
+      setIsLoading(false);
     }
-  }, [currentUserID]);
+  }, [userID]);
+
+  const fetchBalances = async (userId) => {
+    try {
+      setIsLoading(true);
+      const data = await ApiManager.BalancesService.fetchBalances(userId);
+      if (data.success && Array.isArray(data.balances)) {
+        const apiBalances = data.balances;
+        setBalances({
+          USD: getNetBalance(apiBalances, "USD"),
+          EUR: getNetBalance(apiBalances, "EUR"),
+          IRR: getNetBalance(apiBalances, "IRR"),
+        });
+      } else {
+        console.error("Unexpected API response structure:", data);
+        setError("خطا در دریافت اطلاعات بالانس.");
+      }
+    } catch (err) {
+      console.error("Error fetching balances:", err);
+      setError("خطایی در ارتباط با سرور رخ داده است.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getNetBalance = (balancesArray, currencyType) => {
     const balance = balancesArray.find(
@@ -53,8 +65,8 @@ const SubHeader = () => {
   return (
     <Box
       sx={{
-        backgroundColor: theme.palette.background.paper, // استفاده از رنگ تم
-        borderBottom: `1px solid ${theme.palette.divider}`, // استفاده از رنگ تم
+        backgroundColor: theme.palette.background.paper,
+        borderBottom: `1px solid ${theme.palette.divider}`,
         padding: "8px 16px",
         display: "flex",
         justifyContent: "center",
@@ -63,44 +75,46 @@ const SubHeader = () => {
         zIndex: "1",
       }}
     >
-      <Grid container spacing={2} maxWidth="lg">
-        <Grid item xs={12} md={4}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.primary, // استفاده از رنگ متن تم
-            }}
-          >
-            <strong>موجودی دلار:</strong> {balances.USD.toLocaleString()} USD
-          </Typography>
+      {isLoading ? (
+        <CircularProgress />
+      ) : error ? (
+        <Typography color="error" variant="subtitle1" align="center">
+          {error}
+        </Typography>
+      ) : (
+        <Grid container spacing={2} maxWidth="lg">
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="subtitle1"
+              align="center"
+              sx={{ fontWeight: 500, color: theme.palette.text.primary }}
+            >
+              <strong>موجودی دلار:</strong>{" "}
+              {balances.USD.toLocaleString("fa-IR")} USD
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="subtitle1"
+              align="center"
+              sx={{ fontWeight: 500, color: theme.palette.text.primary }}
+            >
+              <strong>موجودی یورو:</strong>{" "}
+              {balances.EUR.toLocaleString("fa-IR")} EUR
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="subtitle1"
+              align="center"
+              sx={{ fontWeight: 500, color: theme.palette.text.primary }}
+            >
+              <strong>موجودی ریال:</strong>{" "}
+              {balances.IRR.toLocaleString("fa-IR")} IRR
+            </Typography>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.primary, // استفاده از رنگ متن تم
-            }}
-          >
-            <strong>موجودی یورو:</strong> {balances.EUR.toLocaleString()} EUR
-          </Typography>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{
-              fontWeight: 500,
-              color: theme.palette.text.primary, // استفاده از رنگ متن تم
-            }}
-          >
-            <strong>موجودی ریال:</strong> {balances.IRR.toLocaleString()} IRR
-          </Typography>
-        </Grid>
-      </Grid>
+      )}
     </Box>
   );
 };

@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify  # type: ignore
 from user_models import db
-from sqlalchemy import text
+from sqlalchemy import text  # type: ignore
 
 balances_bp = Blueprint('balances_bp', __name__)
 

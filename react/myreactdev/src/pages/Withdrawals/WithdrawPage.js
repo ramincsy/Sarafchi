@@ -74,7 +74,6 @@ const WithdrawPage = () => {
     // دریافت user_id
     const user_id = getUserID();
     if (!user_id) {
-      console.log(user_id);
       setError("خطا در دریافت شناسه کاربر. لطفاً دوباره وارد شوید.");
       return;
     }
@@ -97,8 +96,6 @@ const WithdrawPage = () => {
       Description: "درخواست برداشت ریالی",
       CreatedBy: user_id,
     };
-
-    console.log("Payload به سرور ارسال شد:", payload);
 
     try {
       // ارسال درخواست به سرور

@@ -26,10 +26,11 @@ const LiveTransaction = () => {
   const [currency, setCurrency] = useState("USD");
   const [transactionType, setTransactionType] = useState("buy");
   const [transactions, setTransactions] = useState([]);
-  const { userInfo } = useContext(AuthContext);
+
   const theme = useTheme();
 
-  const getCurrentUserID = () => userInfo?.user_id || "System";
+  const { userInfo } = useContext(AuthContext);
+  const getCurrentUserID = userInfo?.UserID;
 
   useEffect(() => {
     const fetchLivePrice = async () => {
@@ -86,13 +87,13 @@ const LiveTransaction = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const transactionData = {
-      UserID: getCurrentUserID(),
+      UserID: getCurrentUserID,
       Quantity: parseFloat(quantity),
       Price: parseFloat(price),
       TransactionType: "Live",
       Position: transactionType === "buy" ? "Buy" : "Sell",
       CurrencyType: currency,
-      CreatedBy: getCurrentUserID(),
+      CreatedBy: getCurrentUserID,
     };
 
     try {
@@ -208,6 +209,7 @@ const LiveTransaction = () => {
             }}
           >
             <TransactionTable
+              transactions={transactions}
               role="manager"
               showApproveButton={true}
               showRejectButton={true}

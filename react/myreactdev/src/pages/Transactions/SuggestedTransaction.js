@@ -192,6 +192,7 @@ const SuggestedTransaction = () => {
             }}
           >
             <TransactionTable
+              transactions={transactions}
               role="manager"
               showApproveButton={true}
               showRejectButton={true}

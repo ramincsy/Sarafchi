@@ -10,10 +10,10 @@ import {
 import ApiManager from "services/ApiManager";
 
 const PriceBox = ({
-  refreshInterval = 60000,
-  showBuyPrice = true,
-  showSellPrice = true,
-  splitBoxes = true,
+  refreshInterval = 100000, // مقدار پیش‌فرض
+  showBuyPrice = true, // مقدار پیش‌فرض
+  showSellPrice = true, // مقدار پیش‌فرض
+  splitBoxes = true, // مقدار پیش‌فرض
 }) => {
   const [loadingPrice, setLoadingPrice] = useState(true);
   const [priceError, setPriceError] = useState(null);
@@ -153,13 +153,6 @@ PriceBox.propTypes = {
   showSellPrice: PropTypes.bool,
   /** نمایش جداگانه قیمت‌ها در باکس‌های جدا */
   splitBoxes: PropTypes.bool,
-};
-
-PriceBox.defaultProps = {
-  refreshInterval: 100000,
-  showBuyPrice: true,
-  showSellPrice: true,
-  splitBoxes: true,
 };
 
 export default PriceBox;

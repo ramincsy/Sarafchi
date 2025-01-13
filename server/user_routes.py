@@ -1,152 +1,152 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import (
+from flask import Blueprint, request, jsonify  # type: ignore
+from flask_jwt_extended import (  # type: ignore
     create_access_token, create_refresh_token, jwt_required,
-    get_jwt_identity
+    get_jwt_identity, set_access_cookies, set_refresh_cookies
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from user_models import Users, JwtTokens, db, user_schema, users_schema
-from sqlalchemy import text
-from sqlalchemy.sql import text
+from sqlalchemy import text  # type: ignore
+from sqlalchemy.sql import text  # type: ignore
+from token_utils import TokenManager
+
 user_bp = Blueprint('user_bp', __name__)
+
+
+def get_user_info_by_id(user_id):
+    """
+    دریافت اطلاعات کاربر بر اساس UserID از استور پروسیجر spGetUserDetails5.
+    """
+    try:
+        # فراخوانی spGetUserDetails5 برای دریافت جزئیات کاربر
+        user_details_result = db.session.execute(
+            text("EXEC spGetUserDetails5 :UserID"),
+            {"UserID": user_id}
+        ).fetchone()
+
+        if not user_details_result:
+            raise ValueError("User details not found")
+
+        # تبدیل نتیجه به دیکشنری
+        user_details_json = dict(user_details_result._mapping)
+
+        # استخراج فیلد JSON و تبدیل آن به دیکشنری
+        import json
+        user_info = json.loads(user_details_json.get(
+            "JSON_F52E2B61-18A1-11d1-B105-00805F49916B", "{}"))
+
+        if not user_info:
+            raise ValueError("Failed to parse user details JSON")
+
+        return user_info
+    except Exception as e:
+        print(f"Error fetching user details: {str(e)}")
+        raise
+
 
 @user_bp.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-
-    user = Users.query.filter_by(Email=email).first()
-
-    if user and user.Password == password:
-        try:
-            # دریافت نقش‌ها و مجوزهای کاربر
-            user_roles_permissions = db.session.execute(
-                text("EXEC spGetUsersWithRolesAndPermissions")
-            ).fetchall()
-            user_roles_permissions = [
-                dict(row._mapping) for row in user_roles_permissions if row._mapping["UserID"] == user.ID
-            ]
-            roles = list(set(row['RoleName'] for row in user_roles_permissions if row['RoleName']))
-            role_ids = list(set(row['RoleID'] for row in user_roles_permissions if row['RoleID']))
-            permissions = list(set(row['PermissionName'] for row in user_roles_permissions if row['PermissionName']))
-            permission_ids = list(set(row['PermissionID'] for row in user_roles_permissions if row['PermissionID']))
-
-            # دریافت اطلاعات صفحات
-            pages_with_roles_permissions = db.session.execute(
-                text("EXEC spGetPagesWithRolesAndPermissions")
-            ).fetchall()
-            pages = [dict(row._mapping) for row in pages_with_roles_permissions]
-
-            # اطلاعات کامل کاربر
-            existing_user_info = {
-                "id": user.ID,
-                "firstName": user.FirstName,
-                "lastName": user.LastName,
-                "email": user.Email,
-                "roles": roles,
-                "role_ids": role_ids,
-                "permissions": permissions,
-                "permission_ids": permission_ids,
-                "pages": pages,
-            }
-
-            # ایجاد توکن JWT
-            access_token_expires = timedelta(minutes=15)
-            refresh_token_expires = timedelta(days=7)
-            access_token = create_access_token(
-                identity=existing_user_info,
-                expires_delta=access_token_expires
-            )
-            refresh_token = create_refresh_token(
-                identity={"id": user.ID}, expires_delta=refresh_token_expires
-            )
-
-            # ذخیره توکن رفرش
-            expire_date = datetime.now() + refresh_token_expires
-            new_token = JwtTokens(user_id=user.ID, refresh_token=refresh_token, expire_date=expire_date)
-            db.session.add(new_token)
-            db.session.commit()
-
-            # ارسال پاسخ
-            response_data = {
-                'message': 'Login successful',
-                'user_id': user.ID,
-                'first_name': user.FirstName,
-                'last_name': user.LastName,
-                'email': user.Email,
-                'roles': roles,
-                'permissions': permissions,
-                'pages': pages,
-                'access_token': access_token,
-                'refresh_token': refresh_token,
-                'access_token_expiry': (datetime.now() + access_token_expires).isoformat(),
-                'refresh_token_expiry': expire_date.isoformat()
-            }
-            response = jsonify(response_data)
-            response.set_cookie(
-                'refresh_token', refresh_token, httponly=True, secure=True,
-                samesite='Strict', max_age=7 * 24 * 60 * 60
-            )
-            return response, 200
-
-        except Exception as e:
-            print(f"Error during login: {e}")
-            return jsonify({'error': str(e)}), 500
-
-    return jsonify({'error': 'Invalid credentials'}), 401
-
-@user_bp.route('/refresh', methods=['POST'])
-def refresh():
-    refresh_token = request.cookies.get('refresh_token')
-    if not refresh_token:
-        return jsonify({'message': 'No refresh token provided'}), 401
-
-    token_in_db = JwtTokens.query.filter_by(RefreshToken=refresh_token, Revoked=False).first()
-    if not token_in_db or token_in_db.ExpireDate < datetime.now():
-        return jsonify({'message': 'Refresh token is invalid or expired'}), 401
-
-    user = Users.query.get(token_in_db.UserId)
-    new_access_token = create_access_token(
-        identity={"id": user.ID, "name": user.FirstName, "email": user.Email},
-        expires_delta=timedelta(minutes=15)
-    )
-    return jsonify({
-        'access_token': new_access_token,
-        'user_id': user.ID,
-        'name': user.FirstName,
-        'email': user.Email,
-        'access_token_expiry': (datetime.now() + timedelta(minutes=15)).isoformat()
-    }), 200
-
-
-@user_bp.route('/logout', methods=['POST'])
-def logout():
     try:
-        # دریافت توکن از body
+        print("=== Incoming Request Details ===")
+        print(f"Request Headers: {request.headers}")
+        print(f"Request JSON Body: {request.get_json()}")
+        print("================================")
+
+        # دریافت اطلاعات ورود
         data = request.get_json()
-        refresh_token = data.get('refresh_token')
+        print(f"Parsed data: {data}")
+        email = data.get('email', '').strip()
+        password = data.get('password', '').strip()
+        device_id = data.get('device_id', 'Unknown Device')
+        ip_address = request.headers.get(
+            'X-Forwarded-For', request.remote_addr) or "127.0.0.1"
 
-        if not refresh_token:
-            return jsonify({'message': 'Refresh token is required'}), 400
+        if not email or not password:
+            print("Missing email or password.")
+            return jsonify({'error': 'Email and password are required'}), 400
 
-        # به‌روزرسانی وضعیت توکن در پایگاه داده
-        token_in_db = JwtTokens.query.filter_by(RefreshToken=refresh_token, Revoked=False).first()
-        if not token_in_db:
-            return jsonify({'message': 'Invalid refresh token'}), 401
+        print(f"Login attempt with Email: {email}, Device ID: {
+              device_id}, IP Address: {ip_address}")
 
-        token_in_db.Revoked = True
-        db.session.commit()
+        # اعتبارسنجی کاربر
+        try:
+            user_id_result = db.session.execute(
+                text("""DECLARE @UserID INT; EXEC spLoginUser2 :Email, :Password, @UserID = @UserID OUTPUT; SELECT @UserID AS UserID;"""),
+                {"Email": email, "Password": password}
+            ).fetchone()
+            print(f"Database response: {user_id_result}")
+        except Exception as db_error:
+            print(f"Database query failed: {str(db_error)}")
+            return jsonify({'error': 'Database error occurred'}), 500
 
-       
-        # حذف کوکی `refresh_token`
-        response = jsonify({'message': 'Logged out successfully', 'clear_local_storage': True})
-        response.set_cookie('refresh_token', '', expires=0, httponly=True, samesite='Strict', secure=True)
+        if not user_id_result or user_id_result.UserID is None:
+            print("User not found or invalid credentials.")
+            return jsonify({'error': 'Invalid credentials'}), 401
 
-        return response, 200
+        user_id = user_id_result.UserID
+        print(f"Authenticated User ID: {user_id}")
+
+        # دریافت اطلاعات کاربر
+        try:
+            user_info = get_user_info_by_id(user_id)
+            print(f"User Info: {user_info}")
+        except Exception as user_info_error:
+            print(f"Error fetching user details: {str(user_info_error)}")
+            return jsonify({'error': 'Failed to fetch user info'}), 500
+
+        # ایجاد و مدیریت توکن‌ها
+        try:
+            access_token, refresh_token, refresh_token_expiry = TokenManager.create_tokens(
+                user_id=user_id,
+                user_info=user_info,
+                device_id=device_id,
+                purpose="Login",
+                ip_address=ip_address
+            )
+            print(f"Generated tokens: Access Token: {
+                  access_token}, Refresh Token: {refresh_token}")
+        except Exception as token_error:
+            print(f"Error generating tokens: {str(token_error)}")
+            return jsonify({'error': 'Failed to generate tokens'}), 500
+        access_token_expiry = datetime.now(
+            timezone.utc) + TokenManager.ACCESS_TOKEN_EXPIRATION
+        refresh_token_expiry = datetime.now(
+            timezone.utc) + TokenManager.REFRESH_TOKEN_EXPIRATION
+
+        response_data = {
+            'message': 'Login successful',
+            'access_token': access_token,
+            "access_token_expiry": access_token_expiry.isoformat(),
+            'refresh_token': refresh_token,
+            'refresh_token_expiry': refresh_token_expiry.isoformat(),
+            'user_info': user_info
+        }
+        print(f"response_data (response_data): {response_data}")
+
+        print("Login process completed successfully.")
+        return jsonify(response_data), 200
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'message': 'Error during logout', 'error': str(e)}), 500
+        print(f"Unhandled error during login: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+def get_user_roles_permissions(user_id):
+    roles_permissions = db.session.execute(
+        text("EXEC spGetUsersWithRolesAndPermissions2 @UserID=:user_id"),
+        {"user_id": user_id}
+    ).fetchall()
+    roles_permissions = [dict(row._mapping) for row in roles_permissions]
+
+    roles = list(set(row['RoleName']
+                 for row in roles_permissions if row['RoleName']))
+    role_ids = list(set(row['RoleID']
+                    for row in roles_permissions if row['RoleID']))
+    permissions = list(set(row['PermissionName']
+                       for row in roles_permissions if row['PermissionName']))
+    permission_ids = list(set(row['PermissionID']
+                          for row in roles_permissions if row['PermissionID']))
+    return roles, role_ids, permissions, permission_ids
 
 
 @user_bp.route('/listusers', methods=['GET'])
@@ -205,7 +205,8 @@ def userupdate(user_id):
         user.PhoneNumber = data['PhoneNumber']
         user.Email = data['Email']
         if data.get('Password'):
-            user.Password = data['Password']  # هش‌گذاری رمز عبور پیشنهاد می‌شود
+            # هش‌گذاری رمز عبور پیشنهاد می‌شود
+            user.Password = data['Password']
         user.WalletAddress = data.get('WalletAddress', user.WalletAddress)
         db.session.commit()
         return jsonify({"message": "کاربر با موفقیت ویرایش شد", "user": user_schema.dump(user)}), 200

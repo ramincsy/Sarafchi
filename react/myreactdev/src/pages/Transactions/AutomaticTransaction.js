@@ -15,7 +15,6 @@ import {
   useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { DataGrid } from "@mui/x-data-grid";
 import AuthContext from "contexts/AuthContext";
 import ApiManager from "services/ApiManager";
 import TransactionTable from "components/tables/TransactionTable";
@@ -27,11 +26,11 @@ const AutomaticTransaction = () => {
   const [currency, setCurrency] = useState("USD");
   const [transactionType, setTransactionType] = useState("buy");
   const [transactions, setTransactions] = useState([]);
-  const { userInfo } = useContext(AuthContext);
+
   const theme = useTheme();
 
-  const getCurrentUserID = () => userInfo?.user_id || "System";
-
+  const { userInfo } = useContext(AuthContext);
+  const getCurrentUserID = userInfo?.UserID;
   useEffect(() => {
     const fetchPrice = async () => {
       try {
@@ -83,7 +82,7 @@ const AutomaticTransaction = () => {
       TransactionType: "Automatic",
       Position: transactionType === "buy" ? "Buy" : "Sell",
       CurrencyType: currency,
-      CreatedBy: getCurrentUserID(),
+      CreatedBy: getCurrentUserID,
     };
 
     try {
@@ -196,6 +195,7 @@ const AutomaticTransaction = () => {
             }}
           >
             <TransactionTable
+              transactions={transactions}
               role="manager"
               showApproveButton={true}
               showRejectButton={true}

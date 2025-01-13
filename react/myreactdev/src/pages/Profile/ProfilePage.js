@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Typography,
@@ -15,11 +15,35 @@ import {
   Phone,
   AccountCircle,
   Person,
-  VerifiedUser,
   Pages as PagesIcon,
 } from "@mui/icons-material";
-import { getUserID } from "utils/userUtils";
+
 import UserService from "services/UserService";
+import AuthContext from "contexts/AuthContext";
+import { jwtDecode } from "jwt-decode";
+
+const decodeToken = (token) => {
+  try {
+    return jwtDecode(token);
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
+  }
+};
+
+const getTokenExpiryTime = (token) => {
+  const decoded = decodeToken(token);
+  if (decoded && decoded.exp) {
+    return decoded.exp * 1000; // تبدیل به میلی‌ثانیه
+  }
+  return null;
+};
+
+const getRemainingTime = (expiryTime) => {
+  if (!expiryTime) return null;
+  const now = Date.now();
+  return expiryTime > now ? expiryTime - now : 0;
+};
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -27,14 +51,19 @@ const ProfilePage = () => {
   const [permissions, setPermissions] = useState([]);
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { userInfo, authToken, refreshToken } = useContext(AuthContext);
+  const userID = userInfo?.UserID;
+
+  const [loginTime, setLoginTime] = useState(null);
+  const [tokenExpiry, setTokenExpiry] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(null);
 
   const handleLogout = async () => {
     try {
       const response = await UserService.logout(); // ارسال درخواست لاگ‌اوت
-      console.log(response.message);
 
       if (response.clear_local_storage) {
-        localStorage.clear(); // پاک کردن لوکال استوریج
+        // localStorage.clear(); // پاک کردن لوکال استوریج
       }
 
       window.location.href = "/login"; // هدایت به صفحه ورود
@@ -44,8 +73,21 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
+    const expiryTime = getTokenExpiryTime(authToken);
+    setTokenExpiry(expiryTime);
+    const loginTimestamp = userInfo?.loginTime || Date.now();
+    setLoginTime(loginTimestamp);
+    // محاسبه زمان باقی‌مانده
+    const interval = setInterval(() => {
+      const remaining = getRemainingTime(expiryTime);
+      setRemainingTime(remaining);
+    }, 1000);
+
+    return () => clearInterval(interval); // پاک کردن تایمر
+  }, [authToken, userInfo]);
+
+  useEffect(() => {
     const fetchUserData = async () => {
-      const userID = getUserID();
       if (!userID) {
         console.error("User ID not found");
         return;
@@ -164,6 +206,37 @@ const ProfilePage = () => {
           </Grid>
         </Grid>
         <Divider sx={{ width: "100%", marginY: 2 }} />
+        <Typography variant="h5" fontWeight="bold">
+          {user.name}
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          تاریخ ثبت‌نام: {user.dateCreated}
+        </Typography>
+        <Divider sx={{ width: "100%", marginY: 2 }} />
+        <Typography variant="h6" gutterBottom>
+          اطلاعات توکن
+        </Typography>
+        <Stack spacing={1} sx={{ width: "100%" }}>
+          <Typography>
+            <strong>زمان ورود:</strong>{" "}
+            {new Date(loginTime).toLocaleTimeString("fa-IR")}
+          </Typography>
+          <Typography>
+            <strong>زمان انقضا توکن:</strong>{" "}
+            {tokenExpiry
+              ? new Date(tokenExpiry).toLocaleTimeString("fa-IR")
+              : "نامشخص"}
+          </Typography>
+          <Typography>
+            <strong>زمان باقی‌مانده:</strong>{" "}
+            {remainingTime
+              ? `${Math.floor(remainingTime / 1000)} ثانیه`
+              : "منقضی شده"}
+          </Typography>
+        </Stack>
+        <Divider sx={{ width: "100%", marginY: 2 }} />
+        {/* سایر بخش‌ها */}
+        <Typography variant="h6" gutterBottom></Typography>
         <Typography variant="h6" gutterBottom>
           نقش‌ها
         </Typography>

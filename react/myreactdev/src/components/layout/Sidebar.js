@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Box,
   Drawer,
@@ -13,7 +13,7 @@ import {
   CircularProgress,
   useTheme,
 } from "@mui/material";
-import { getUserID } from "utils/userUtils";
+import AuthContext from "contexts/AuthContext";
 import UserService from "services/UserService";
 import { Link } from "react-router-dom";
 import {
@@ -61,22 +61,27 @@ const menuItems = [
   },
   { text: "مدیریت صفحات", icon: <PageviewIcon />, path: "/PageManager" },
   { text: "پروفایل", icon: <SwapIcon />, path: "/ProfilePage" },
+  {
+    text: "TestRefreshTokenPage",
+    icon: <SwapIcon />,
+    path: "/TestRefreshTokenPage",
+  },
 ];
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const theme = useTheme();
+  const { userInfo } = useContext(AuthContext);
+  const userID = userInfo?.UserID;
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const userID = getUserID();
       if (!userID) {
         console.error("User ID not found");
         setLoading(false);
         return;
       }
-
       try {
         const data = await UserService.getUserDetails(userID);
         setUser({
@@ -91,7 +96,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     };
 
     fetchUserData();
-  }, []);
+  }, [userID]);
 
   return (
     <Drawer

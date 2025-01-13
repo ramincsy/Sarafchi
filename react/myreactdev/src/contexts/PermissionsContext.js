@@ -1,6 +1,6 @@
 // src/contexts/PermissionsContext.js
 import React, { createContext, useState, useEffect } from "react";
-import axios from "../utils/axiosInstance";
+import axios from "utils/axiosInstance";
 
 export const PermissionsContext = createContext();
 
@@ -10,52 +10,53 @@ export const PermissionsProvider = ({ children }) => {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchPermissionsAndRoles = async () => {
-      try {
-        const [permissionsRes, rolesRes, pagesRes] = await Promise.all([
-          axios.get("/permissions").catch((err) => {
-            console.error(
-              "Error fetching permissions:",
-              err.response?.data || err.message
-            );
-            return { data: [] }; // Return empty array on failure
-          }),
-          axios.get("/roles").catch((err) => {
-            console.error(
-              "Error fetching roles:",
-              err.response?.data || err.message
-            );
-            return { data: [] };
-          }),
-          axios.get("/pages").catch((err) => {
-            console.error(
-              "Error fetching pages:",
-              err.response?.data || err.message
-            );
-            return { data: [] };
-          }),
-        ]);
-        console.log("Permissions Response:", permissionsRes.data);
-        console.log("Roles Response:", rolesRes.data);
-        console.log("Pages Response:", pagesRes.data);
+  // تابع برای دریافت داده‌ها
+  const fetchData = async (endpoint, label) => {
+    try {
+      const response = await axios.get(endpoint);
 
-        setPermissions(permissionsRes.data);
-        setRoles(rolesRes.data);
-        setPages(pagesRes.data);
-      } catch (err) {
-        console.error("Unexpected error fetching data:", err);
-      } finally {
-        setLoading(false);
+      return response.data || [];
+    } catch (error) {
+      console.error(
+        `Error fetching ${label}:`,
+        error.response?.data || error.message
+      );
+      return [];
+    }
+  };
+
+  // دریافت تمام اطلاعات (permissions, roles, pages)
+  const fetchPermissionsAndRoles = async () => {
+    try {
+      const [permissionsRes, rolesRes, pagesRes] = await Promise.all([
+        fetchData("/permissions", "Permissions"),
+        fetchData("/roles", "Roles"),
+        fetchData("/pages", "Pages"),
+      ]);
+
+      setPermissions(permissionsRes);
+      setRoles(rolesRes);
+      setPages(pagesRes);
+
+      if (!permissionsRes.length || !rolesRes.length || !pagesRes.length) {
+        console.warn(
+          "One or more datasets are empty. Please check the server."
+        );
       }
-    };
+    } catch (error) {
+      console.error("Unexpected error during data fetch:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPermissionsAndRoles();
   }, []);
 
   return (
     <PermissionsContext.Provider value={{ permissions, roles, pages, loading }}>
-      {children}
+      {loading ? <div>در حال بارگذاری داده‌ها...</div> : children}
     </PermissionsContext.Provider>
   );
 };

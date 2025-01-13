@@ -52,7 +52,6 @@ async def scrape_exchange_prices():
 @exchange_prices_bp.route('/exchange-prices', methods=['GET'])
 def get_exchange_prices():
     try:
-        print("Fetching exchange prices...")  # برای دیباگ
         data = asyncio.run(scrape_exchange_prices())
 
         # غیرفعال کردن کش در پاسخ HTTP

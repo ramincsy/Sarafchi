@@ -152,23 +152,23 @@ def get_users_for_page(page_id):
 @page_bp.route('/roles', methods=['GET'])
 def get_roles():
     try:
-        print("Fetching roles from database...")
+       
         roles = db.session.execute(text("EXEC spGetAllRoles")).fetchall()
         roles_list = [dict(row._mapping) for row in roles]
-        print("Roles fetched:", roles_list)
+       
         return jsonify(roles_list), 200
     except Exception as e:
-        print("Error fetching roles:", str(e))
+       
         return jsonify({"error": str(e)}), 500
 
 @page_bp.route('/permissions', methods=['GET'])
 def get_permissions():
     try:
-        print("Fetching permissions from database...")
+       
         permissions = db.session.execute(text("EXEC spGetAllPermissions")).fetchall()
         permissions_list = [dict(row._mapping) for row in permissions]
-        print("Permissions fetched:", permissions_list)
+       
         return jsonify(permissions_list), 200
     except Exception as e:
-        print("Error fetching permissions:", str(e))
+     
         return jsonify({"error": str(e)}), 500
