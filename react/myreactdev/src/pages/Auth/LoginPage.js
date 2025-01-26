@@ -33,15 +33,6 @@ const LoginPage = () => {
       const deviceId = getOrCreateUUID();
       const ipAddress = await getIPAddress();
 
-      console.log("Device ID:", deviceId);
-      console.log("IP Address:", ipAddress);
-      console.log("Request Body:", {
-        email,
-        password,
-        device_id: deviceId,
-        ip_address: ipAddress,
-      });
-
       await login(email, password, ipAddress, deviceId); // استفاده از متد login از AuthContext
 
       console.log("Login successful. Navigating to dashboard...");

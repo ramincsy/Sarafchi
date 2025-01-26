@@ -8,6 +8,13 @@ const axiosInstance = axios.create({
   },
 });
 
+// const axiosInstance = axios.create({
+//   baseURL: "https://eighty-heads-add.loca.lt/api",
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
 let isRefreshing = false;
 let refreshQueue = [];
 
@@ -32,6 +39,9 @@ axiosInstance.interceptors.request.use(
   async (config) => {
     // استثناء برای درخواست لاگین
     if (config.url === "/login") return config;
+    if (config.method === "options") {
+      return config;
+    }
 
     try {
       const validToken = tokenManager.getAccessToken();

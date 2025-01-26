@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { Box, CssBaseline, useTheme, useMediaQuery } from "@mui/material";
 import Header from "components/layout/Header";
 import Footer from "components/layout/Footer";
@@ -11,10 +17,8 @@ const Layout = ({ children }) => {
   const sidebarRef = useRef(null);
   const theme = useTheme();
 
-  // Use breakpoints from theme for consistency
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Memoize styles to prevent unnecessary recalculations
   const styles = useMemo(
     () => ({
       root: {
@@ -25,6 +29,9 @@ const Layout = ({ children }) => {
           mode === "dark"
             ? theme.palette.background.default
             : theme.palette.grey[100],
+        transition: theme.transitions.create(["background-color"], {
+          duration: theme.transitions.duration.standard,
+        }),
       },
       main: {
         flexGrow: 1,
@@ -37,15 +44,38 @@ const Layout = ({ children }) => {
           duration: theme.transitions.duration.standard,
         }),
       },
+      sidebar: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "250px",
+        height: "100vh",
+        backgroundColor: theme.palette.background.paper,
+        boxShadow: theme.shadows[4],
+        transform: isSidebarVisible ? "translateX(0)" : "translateX(-100%)",
+        transition: theme.transitions.create(["transform"], {
+          duration: theme.transitions.duration.standard,
+        }),
+        zIndex: theme.zIndex.drawer,
+      },
+      overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: theme.zIndex.drawer - 1,
+        display: isSidebarVisible ? "block" : "none",
+      },
     }),
-    [mode, theme]
+    [mode, theme, isSidebarVisible]
   );
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setSidebarVisible((prev) => !prev);
-  };
+  }, []);
 
-  // Improved click outside handler with proper cleanup
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -58,9 +88,7 @@ const Layout = ({ children }) => {
     };
 
     if (isSidebarVisible) {
-      // Use capture phase for better event handling
       document.addEventListener("mousedown", handleClickOutside, true);
-      // Add escape key handler
       const handleEscape = (event) => {
         if (event.key === "Escape") {
           setSidebarVisible(false);
@@ -75,7 +103,6 @@ const Layout = ({ children }) => {
     }
   }, [isSidebarVisible]);
 
-  // Prevent scroll when sidebar is open on mobile
   useEffect(() => {
     if (isMobile && isSidebarVisible) {
       document.body.style.overflow = "hidden";
@@ -94,6 +121,15 @@ const Layout = ({ children }) => {
         isSidebarVisible={isSidebarVisible}
       />
 
+      {/* Sidebar Overlay */}
+      {isSidebarVisible && <Box sx={styles.overlay} onClick={toggleSidebar} />}
+
+      {/* Sidebar */}
+      <Box ref={sidebarRef} sx={styles.sidebar}>
+        {/* Sidebar Content */}
+      </Box>
+
+      {/* Main Content */}
       <Box
         component="main"
         sx={styles.main}
@@ -103,6 +139,7 @@ const Layout = ({ children }) => {
         {children}
       </Box>
 
+      {/* Footer or Mobile Navigation */}
       {isMobile ? <MobileBottomNavigation /> : <Footer />}
     </Box>
   );

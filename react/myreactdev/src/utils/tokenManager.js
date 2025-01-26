@@ -26,13 +26,12 @@ const onRefreshFailed = () => {
 const setToken = (key, value) => {
   if (value) {
     localStorage.setItem(key, value);
-    console.log(`Stored token (${key}):`, value);
   }
 };
 
 const getToken = (key) => {
   const token = localStorage.getItem(key);
-  console.log(`Retrieved token (${key}):`, token);
+
   return token;
 };
 
@@ -140,6 +139,10 @@ const getTokenExpiry = (key) => {
   if (!expiry) return null;
   return new Date(expiry).getTime(); // بازگرداندن زمان انقضا به میلی‌ثانیه
 };
+const logout = () => {
+  clearTokens();
+  window.location.href = "/login"; // هدایت کاربر به صفحه ورود
+};
 
 const validateAndRefreshToken = async () => {
   const accessToken = getToken(TOKEN_KEYS.ACCESS_TOKEN);
@@ -182,4 +185,5 @@ export const tokenManager = {
   isTokenNearExpiry,
   refreshAccessToken,
   validateAndRefreshToken,
+  logout,
 };

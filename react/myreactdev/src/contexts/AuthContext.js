@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const decodeAndSetUserInfo = useCallback((token) => {
     try {
       const decoded = jwtDecode(token);
-      console.log("Decoded token payload:", decoded);
+      //console.log("Decoded token payload:", decoded);
 
       if (!decoded || !decoded.sub) {
         throw new Error("Invalid token structure");
@@ -45,8 +45,6 @@ export const AuthProvider = ({ children }) => {
         ipAddress,
         deviceId
       );
-      console.log("=== Response from server ===");
-      console.log("Full response data:", response.data);
 
       const {
         access_token,
@@ -54,13 +52,6 @@ export const AuthProvider = ({ children }) => {
         access_token_expiry,
         refresh_token_expiry,
       } = response.data;
-      console.log("response");
-      console.log(response.data);
-      // لاگ برای بررسی مقادیر
-      console.log("Access Token:", access_token);
-      console.log("Refresh Token:", refresh_token);
-      console.log("Access Token Expiry:", access_token_expiry);
-      console.log("Refresh Token Expiry:", refresh_token_expiry);
 
       if (!access_token || !refresh_token) {
         throw new Error("Invalid tokens received from server.");
@@ -86,7 +77,6 @@ export const AuthProvider = ({ children }) => {
           );
         }
       }
-      console.log("Storing tokens in tokenManager...");
 
       // بررسی زمان انقضا پیش از ذخیره
 
@@ -115,8 +105,6 @@ export const AuthProvider = ({ children }) => {
    */
   const refreshToken = useCallback(async () => {
     try {
-      console.log("Attempting to refresh token...");
-
       const currentToken = tokenManager.getAccessToken();
 
       // اعتبارسنجی توکن فعلی
@@ -153,7 +141,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       setIsLoading(true);
-      console.log("Initializing authentication...");
 
       try {
         const token = tokenManager.getAccessToken();
@@ -168,7 +155,6 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (tokenManager.isTokenValid(token)) {
-          console.log("Access token is valid. Setting user info...");
           setAuthToken(token);
           decodeAndSetUserInfo(token);
         } else {
@@ -184,7 +170,6 @@ export const AuthProvider = ({ children }) => {
         console.error("Error during authentication initialization:", error);
         tokenManager.clearTokens();
       } finally {
-        console.log("Authentication initialization complete.");
         setIsLoading(false);
       }
     };

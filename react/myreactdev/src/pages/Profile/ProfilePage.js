@@ -19,9 +19,10 @@ import {
 } from "@mui/icons-material";
 
 import UserService from "services/UserService";
+import AuthService from "services/AuthService";
 import AuthContext from "contexts/AuthContext";
 import { jwtDecode } from "jwt-decode";
-
+import { tokenManager } from "utils/tokenManager";
 const decodeToken = (token) => {
   try {
     return jwtDecode(token);
@@ -58,18 +59,8 @@ const ProfilePage = () => {
   const [tokenExpiry, setTokenExpiry] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
 
-  const handleLogout = async () => {
-    try {
-      const response = await UserService.logout(); // ارسال درخواست لاگ‌اوت
-
-      if (response.clear_local_storage) {
-        // localStorage.clear(); // پاک کردن لوکال استوریج
-      }
-
-      window.location.href = "/login"; // هدایت به صفحه ورود
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
+  const handleLogout = () => {
+    tokenManager.logout();
   };
 
   useEffect(() => {

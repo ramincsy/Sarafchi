@@ -23,19 +23,21 @@ def get_user_info_by_id(user_id):
             {"UserID": user_id}
         ).fetchone()
 
+        # چاپ پاسخ دیتابیس برای اشکال‌زدایی
+        print("Database response:", user_details_result)
+
         if not user_details_result:
             raise ValueError("User details not found")
 
-        # تبدیل نتیجه به دیکشنری
-        user_details_json = dict(user_details_result._mapping)
+        # استخراج JSON از اولین عنصر تاپل
+        user_details_json = user_details_result[0]
 
-        # استخراج فیلد JSON و تبدیل آن به دیکشنری
+        if not user_details_json:
+            raise ValueError("Failed to fetch user details JSON")
+
+        # تبدیل JSON به دیکشنری
         import json
-        user_info = json.loads(user_details_json.get(
-            "JSON_F52E2B61-18A1-11d1-B105-00805F49916B", "{}"))
-
-        if not user_info:
-            raise ValueError("Failed to parse user details JSON")
+        user_info = json.loads(user_details_json)
 
         return user_info
     except Exception as e:
@@ -160,35 +162,76 @@ def listusers():
 
 @user_bp.route('/useradd', methods=['POST'])
 def useradd():
-    data = request.json
     try:
-        db.session.execute(
-            text("""
-                EXEC spAddUser
-                    @FirstName=:FirstName,
-                    @LastName=:LastName,
-                    @NationalID=:NationalID,
-                    @PhoneNumber=:PhoneNumber,
-                    @Email=:Email,
-                    @Password=:Password,
-                    @CreatedBy=:CreatedBy,
-                    @WalletAddress=:WalletAddress
-            """),
-            {
-                "FirstName": data["FirstName"],
-                "LastName": data["LastName"],
-                "NationalID": data["NationalID"],
-                "PhoneNumber": data["PhoneNumber"],
-                "Email": data["Email"],
-                "Password": data["Password"],
-                "CreatedBy": data.get("CreatedBy", "System"),
-                "WalletAddress": data.get("WalletAddress")
-            }
-        )
+        data = request.json
+
+        print("Executing spAddUserWithWallet...")
+
+        # ایجاد cursor
+        connection = db.session.connection().connection
+        cursor = connection.cursor()
+
+        # اجرای استور پروسیجر
+        cursor.execute("""
+            DECLARE @UserID INT;
+            DECLARE @WalletAddress NVARCHAR(255);
+
+            EXEC spAddUserWithWallet
+                @FirstName = ?,
+                @LastName = ?,
+                @NationalID = ?,
+                @PhoneNumber = ?,
+                @Email = ?,
+                @Password = ?,
+                @CreatedBy = ?,
+                @UserID = @UserID OUTPUT,
+                @WalletAddress = @WalletAddress OUTPUT;
+
+            SELECT @UserID AS UserID, @WalletAddress AS WalletAddress;
+        """, (
+            data.get("FirstName"),
+            data.get("LastName"),
+            data.get("NationalID"),
+            data.get("PhoneNumber"),
+            data.get("Email"),
+            data.get("Password"),
+            data.get("CreatedBy", "System")
+        ))
+
+        # دریافت نتیجه
+        result = cursor.fetchone()
+        if not result:
+            raise Exception("Failed to retrieve UserID or WalletAddress.")
+
+        user_id, wallet_address = result
+        print(f"User created with UserID: {
+              user_id}, WalletAddress: {wallet_address}")
+
+        # بررسی نتیجه
+        if not user_id or not wallet_address:
+            raise Exception("Failed to create user or assign wallet address.")
+
+        # ثبت تغییرات
         db.session.commit()
-        return jsonify({"message": "کاربر با موفقیت اضافه شد"}), 201
+
+        # پاسخ موفقیت‌آمیز
+        return jsonify({
+            "message": "User created and wallet assigned successfully",
+            "userID": user_id,
+            "walletAddress": wallet_address
+        }), 201
+
     except Exception as e:
-        return jsonify({"error": f"خطا در افزودن کاربر: {str(e)}"}), 400
+        db.session.rollback()
+        print(f"Error occurred: {str(e)}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+    finally:
+        # بستن cursor
+        try:
+            cursor.close()
+        except:
+            pass
 
 
 @user_bp.route('/userupdate/<int:user_id>', methods=['PUT'])
@@ -282,3 +325,42 @@ def get_user_details(user_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@user_bp.route('/logout', methods=['POST'])
+def logout():
+    try:
+        # دریافت اطلاعات کاربر از بدنه درخواست
+        data = request.json
+        user_id = data.get('user_id')
+        device_id = data.get('device_id', 'Unknown Device')
+        ip_address = request.headers.get(
+            'X-Forwarded-For', request.remote_addr) or "127.0.0.1"
+
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+
+        print(f"Logout request from User ID: {
+              user_id}, Device ID: {device_id}, IP Address: {ip_address}")
+
+        # باطل کردن توکن‌ها
+        try:
+            # باطل کردن توکن‌ها در دیتابیس یا سیستم مدیریت توکن‌ها
+            TokenManager.revoke_tokens(user_id=user_id, device_id=device_id)
+            print(f"Tokens revoked for User ID: {user_id}")
+        except Exception as token_error:
+            print(f"Error revoking tokens: {str(token_error)}")
+            return jsonify({'error': 'Failed to revoke tokens'}), 500
+
+        # پاسخ موفقیت‌آمیز
+        response_data = {
+            'message': 'Logout successful',
+            'user_id': user_id,
+            'device_id': device_id,
+            'ip_address': ip_address
+        }
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        print(f"Unhandled error during logout: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500

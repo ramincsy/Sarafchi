@@ -31,7 +31,12 @@ import PermissionManagement from "pages/PermissionManagement";
 import UserRoleManagement from "pages/UserRoleManagement";
 import ManualTokenRefreshTest from "pages/ManualTokenRefreshTest";
 import TestRefreshTokenPage from "pages/TestRefreshTokenPage";
-
+import UsersWalletsPage from "pages/Blockchain/Tron/UsersWalletsPage";
+import Notifications from "pages/Notifications";
+import SendNotificationPage from "pages/SendNotificationPage";
+import SendPushNotificationPage from "pages/SendPushNotificationPage";
+import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
+import FinancialDashboard from "pages/FinancialDashboard";
 // Route configurations
 export const publicRoutes = [
   {
@@ -46,11 +51,15 @@ export const publicRoutes = [
     path: "/unauthorized",
     element: <UnauthorizedPage />,
   },
+  {
+    path: "/Notifications",
+    element: <Notifications />,
+  },
 ];
 
 export const protectedRoutes = [
   {
-    path: "/",
+    path: "/DashboardPage",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -212,6 +221,46 @@ export const protectedRoutes = [
     element: (
       <ProtectedRoute>
         <TestRefreshTokenPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/UsersWalletsPage",
+    element: (
+      <ProtectedRoute>
+        <UsersWalletsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/SendNotificationPage",
+    element: (
+      <ProtectedRoute>
+        <SendNotificationPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/SendPushNotificationPage",
+    element: (
+      <ProtectedRoute>
+        <SendPushNotificationPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/WithdrawUSDTPage",
+    element: (
+      <ProtectedRoute>
+        <WithdrawUSDTPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/FinancialDashboard",
+    element: (
+      <ProtectedRoute>
+        <FinancialDashboard />
       </ProtectedRoute>
     ),
   },

@@ -35,6 +35,7 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const validateSession = async () => {
+      console.log(userInfo);
       try {
         const token = tokenManager.getAccessToken();
 
@@ -51,7 +52,7 @@ const ProtectedRoute = ({ children }) => {
             await tokenManager.refreshAccessToken();
           } else {
             console.warn("Token refresh already in progress. Waiting...");
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // انتظار کوتاه
+            await new Promise((resolve) => setTimeout(resolve, 500)); // انتظار کوتاه
           }
         }
       } catch (error) {
@@ -66,7 +67,6 @@ const ProtectedRoute = ({ children }) => {
   }, [logout]);
 
   if (isLoading) {
-    console.log("Loading session validation...");
     return <div>در حال بررسی دسترسی...</div>;
   }
 
@@ -75,8 +75,10 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  const currentPage = userInfo.Pages.find(
-    (page) => location.pathname.toLowerCase() === page.PageURL.toLowerCase()
+  const currentPage = (userInfo?.Pages || []).find(
+    (page) =>
+      location.pathname.toLowerCase().replace("/", "") ===
+      page.PageURL.toLowerCase()
   );
 
   if (!currentPage) {
@@ -89,7 +91,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  console.log(`Access granted to: ${location.pathname}`);
+  //console.log(`Access granted to: ${location.pathname}`);
   return children;
 };
 

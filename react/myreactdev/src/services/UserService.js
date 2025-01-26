@@ -17,7 +17,16 @@ const UserService = {
       return response.data;
     } catch (error) {
       console.error("Error creating user:", error);
-      throw error.response?.data?.error || "Failed to create user.";
+
+      // بررسی وجود پاسخ از سرور و مدیریت خطا
+      if (error.response && error.response.data) {
+        const serverError =
+          error.response.data.error || "خطای ناشناخته از سمت سرور";
+        throw new Error(serverError);
+      } else {
+        // مدیریت خطای اتصال یا مشکلات غیر از سرور
+        throw new Error("خطا در اتصال به سرور. لطفاً دوباره تلاش کنید.");
+      }
     }
   },
 

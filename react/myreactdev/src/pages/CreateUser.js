@@ -21,10 +21,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import AuthContext from "contexts/AuthContext";
 import UserService from "services/UserService";
+import WalletService from "services/WalletService";
 
 export default function ManageUsers() {
   const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
+  const id = userInfo.UserID;
 
   const [inputs, setInputs] = useState({
     firstName: "",
@@ -41,6 +43,7 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
+      console.log(userInfo);
       const data = await UserService.fetchUsers();
       setUsers(data);
     } catch (error) {
@@ -59,6 +62,8 @@ export default function ManageUsers() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // آماده‌سازی payload کاربر
     const userPayload = {
       FirstName: inputs.firstName,
       LastName: inputs.lastName,
@@ -66,18 +71,29 @@ export default function ManageUsers() {
       PhoneNumber: inputs.phoneNumber,
       Email: inputs.email,
       Password: inputs.password,
-      WalletAddress: inputs.walletAddress,
       CreatedBy: userInfo?.name || "Admin",
     };
 
     try {
       if (editingUser) {
+        // ویرایش کاربر موجود
         await UserService.updateUser(editingUser.ID, userPayload);
         alert("کاربر با موفقیت ویرایش شد");
       } else {
-        await UserService.createUser(userPayload);
-        alert("کاربر با موفقیت ایجاد شد");
+        // ایجاد کاربر جدید
+        const response = await UserService.createUser(userPayload);
+
+        if (response) {
+          const { userID, walletAddress } = response; // ساختار response.data مستقیم مدیریت می‌شود
+          alert(
+            `کاربر با موفقیت ایجاد شد! \n شناسه: ${
+              userID || "نامشخص"
+            } \n آدرس کیف پول: ${walletAddress || "نامشخص"}`
+          );
+        }
       }
+
+      // پاک کردن فرم و بستن مدال
       setInputs({
         firstName: "",
         lastName: "",
@@ -91,7 +107,11 @@ export default function ManageUsers() {
       fetchUsers();
       setModalOpen(false);
     } catch (error) {
-      alert(`خطا در ذخیره کاربر: ${error}`);
+      // مدیریت خطا و نمایش پیام
+      console.error("Error in handleSubmit:", error);
+      const errorMessage =
+        error.message || "خطای نامشخص در ذخیره کاربر. لطفاً دوباره تلاش کنید.";
+      alert(`خطا در ذخیره کاربر: ${errorMessage}`);
     }
   };
 
@@ -102,6 +122,7 @@ export default function ManageUsers() {
         alert("کاربر با موفقیت حذف شد");
         fetchUsers();
       } catch (error) {
+        console.log(error);
         alert(`خطا در حذف کاربر: ${error}`);
       }
     }
@@ -272,6 +293,7 @@ export default function ManageUsers() {
                 value={inputs.walletAddress}
                 onChange={handleChange}
                 fullWidth
+                disabled // غیرفعال کردن فیلد برای ویرایش
               />
             </Grid>
           </Grid>

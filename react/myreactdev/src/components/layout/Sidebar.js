@@ -12,10 +12,15 @@ import {
   Avatar,
   CircularProgress,
   useTheme,
+  TextField,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useMediaQuery,
 } from "@mui/material";
 import AuthContext from "contexts/AuthContext";
 import UserService from "services/UserService";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Home as HomeIcon,
   People as PeopleIcon,
@@ -26,54 +31,146 @@ import {
   ManageAccounts as ManageAccountsIcon,
   AttachMoney as MoneyIcon,
   SwapHoriz as SwapIcon,
+  ExpandMore as ExpandMoreIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
+import CircleNotificationsIcon from "@mui/icons-material/CircleNotifications";
+import SendIcon from "@mui/icons-material/Send";
 
-const menuItems = [
-  { text: "صفحه اصلی", icon: <HomeIcon />, path: "/" },
-  { text: "مدیریت کاربر", icon: <PeopleIcon />, path: "/addnewuser" },
+// گروه‌بندی آیتم‌های منو
+const groupedMenuItems = [
   {
-    text: "معامله اتوماتیک",
-    icon: <SwapIcon />,
-    path: "/automatic-transaction",
+    title: "داشبوردها",
+    items: [
+      { text: "صفحه اصلی", icon: <HomeIcon />, path: "/DashboardPage" },
+      {
+        text: "داشبورد ادمین",
+        icon: <DashboardIcon />,
+        path: "/AdminDashboard",
+      },
+      {
+        text: " داشبورد مدیریت مالی",
+        icon: <HomeIcon />,
+        path: "/FinancialDashboard",
+      },
+    ],
   },
   {
-    text: "معامله پیشنهادی",
-    icon: <MoneyIcon />,
-    path: "/suggested-transaction",
-  },
-  { text: "معامله روی خط", icon: <SwapIcon />, path: "/live-transaction" },
-  { text: "موجودی", icon: <WalletIcon />, path: "/balances" },
-  { text: "داشبورد ادمین", icon: <DashboardIcon />, path: "/AdminDashboard" },
-  { text: "واریز", icon: <MoneyIcon />, path: "/deposit" },
-  { text: "قیمت صرافی‌ها", icon: <MoneyIcon />, path: "/exchange-prices" },
-  { text: "استعلام کارت شبا", icon: <PageviewIcon />, path: "/JibitPage" },
-  { text: "برداشت‌ها", icon: <ExitToAppIcon />, path: "/WithdrawPage" },
-  { text: "معاملات کلی", icon: <SwapIcon />, path: "/AllTransactionsPage" },
-  {
-    text: "برداشت‌های کلی",
-    icon: <ExitToAppIcon />,
-    path: "/AllWithdrawalsPage",
+    title: "مدیریت کاربران",
+    items: [
+      { text: "مدیریت کاربر", icon: <PeopleIcon />, path: "/addnewuser" },
+      { text: "پروفایل", icon: <SwapIcon />, path: "/ProfilePage" },
+    ],
   },
   {
-    text: "مدیریت نقش‌ها و مجوزها",
-    icon: <ManageAccountsIcon />,
-    path: "/RolesPermissionsManager",
+    title: "تراکنش‌ها",
+    items: [
+      {
+        text: "معامله اتوماتیک",
+        icon: <SwapIcon />,
+        path: "/automatic-transaction",
+      },
+      {
+        text: "معامله پیشنهادی",
+        icon: <MoneyIcon />,
+        path: "/suggested-transaction",
+      },
+      { text: "معامله روی خط", icon: <SwapIcon />, path: "/live-transaction" },
+      { text: "معاملات کلی", icon: <SwapIcon />, path: "/AllTransactionsPage" },
+    ],
   },
-  { text: "مدیریت صفحات", icon: <PageviewIcon />, path: "/PageManager" },
-  { text: "پروفایل", icon: <SwapIcon />, path: "/ProfilePage" },
   {
-    text: "TestRefreshTokenPage",
-    icon: <SwapIcon />,
-    path: "/TestRefreshTokenPage",
+    title: "مالی",
+    items: [
+      { text: "موجودی", icon: <WalletIcon />, path: "/balances" },
+      { text: "واریز", icon: <MoneyIcon />, path: "/deposit" },
+      { text: "برداشت‌ها", icon: <ExitToAppIcon />, path: "/WithdrawPage" },
+      {
+        text: "برداشت‌های کلی",
+        icon: <ExitToAppIcon />,
+        path: "/AllWithdrawalsPage",
+      },
+      {
+        text: "برداشت USDT",
+        icon: <ExitToAppIcon />,
+        path: "/WithdrawUSDTPage",
+      },
+    ],
+  },
+  {
+    title: "مدیریت سیستم",
+    items: [
+      {
+        text: "مدیریت نقش‌ها و مجوزها",
+        icon: <ManageAccountsIcon />,
+        path: "/RolesPermissionsManager",
+      },
+      { text: "مدیریت صفحات", icon: <PageviewIcon />, path: "/PageManager" },
+      {
+        text: "مدیریت نقش‌ها",
+        icon: <ManageAccountsIcon />,
+        path: "/RoleManagement",
+      },
+      {
+        text: "مدیریت مجوزها",
+        icon: <ManageAccountsIcon />,
+        path: "/PermissionManagement",
+      },
+      {
+        text: "مدیریت نقش‌های کاربران",
+        icon: <ManageAccountsIcon />,
+        path: "/UserRoleManagement",
+      },
+    ],
+  },
+  {
+    title: "اطلاع‌رسانی‌ها",
+    items: [
+      {
+        text: "اطلاع‌رسانی‌ها",
+        icon: <CircleNotificationsIcon />,
+        path: "/Notifications",
+      },
+      {
+        text: "ارسال اطلاع‌رسانی",
+        icon: <SendIcon />,
+        path: "/SendNotificationPage",
+      },
+      {
+        text: "ارسال اطلاع‌رسانی Push",
+        icon: <SendIcon />,
+        path: "/SendPushNotificationPage",
+      },
+    ],
+  },
+  {
+    title: "سایر",
+    items: [
+      { text: "قیمت صرافی‌ها", icon: <MoneyIcon />, path: "/exchange-prices" },
+      { text: "استعلام کارت شبا", icon: <PageviewIcon />, path: "/JibitPage" },
+      {
+        text: "TestRefreshTokenPage",
+        icon: <SwapIcon />,
+        path: "/TestRefreshTokenPage",
+      },
+      {
+        text: "UsersWalletsPage",
+        icon: <SwapIcon />,
+        path: "/UsersWalletsPage",
+      },
+    ],
   },
 ];
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
   const userID = userInfo?.UserID;
+  const location = useLocation();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -98,6 +195,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     fetchUserData();
   }, [userID]);
 
+  const filteredMenuItems = groupedMenuItems.map((group) => ({
+    ...group,
+    items: group.items.filter((item) =>
+      item.text.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+  }));
+
   return (
     <Drawer
       anchor="left"
@@ -106,22 +210,23 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       variant="temporary"
       PaperProps={{
         sx: {
-          width: 260,
+          width: isMobile ? "80%" : 260,
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.text.primary,
           boxShadow: "0px 4px 10px rgba(0,0,0,0.25)",
+          transition: "transform 0.3s ease-in-out",
         },
       }}
     >
-      {/* اطلاعات کاربر */}
+      {/* هدر کاربر */}
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           padding: 2,
-          backgroundColor: theme.palette.primary.main,
-          color: theme.palette.primary.main,
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          color: theme.palette.primary.contrastText,
         }}
       >
         {loading ? (
@@ -137,51 +242,73 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             />
             <Typography variant="h6">{user.name}</Typography>
             {user.roles.map((role, index) => (
-              <Typography key={index} variant="body">
+              <Typography key={index} variant="body2">
                 {role}
               </Typography>
             ))}
           </>
         ) : (
-          <Typography variant="body">خطا در دریافت اطلاعات کاربر</Typography>
+          <Typography variant="body2">خطا در دریافت اطلاعات کاربر</Typography>
         )}
       </Box>
       <Divider />
-      {/* منوی سایدبار */}
+
+      {/* بخش جستجو */}
+      <Box sx={{ padding: 2 }}>
+        <TextField
+          fullWidth
+          placeholder="جستجو در منو..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ marginRight: 1 }} />,
+          }}
+          sx={{ marginBottom: 2 }}
+        />
+      </Box>
+
+      {/* منوی سایدبار با بخش‌های تاشو */}
       <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              component={Link}
-              to={item.path}
-              sx={{
-                "&:hover": {
-                  backgroundColor: theme.palette.action.hover,
-                },
-                "&.Mui-selected": {
-                  backgroundColor: theme.palette.action.selected,
-                  "&:hover": {
-                    backgroundColor: theme.palette.action.hover,
-                  },
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  color: theme.palette.text.primary,
-                }}
-              >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                primaryTypographyProps={{
-                  color: theme.palette.text.primary,
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {filteredMenuItems.map((group) =>
+          group.items.length > 0 ? (
+            <Accordion key={group.title} disableGutters elevation={0}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle1">{group.title}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <List>
+                  {group.items.map((item) => (
+                    <ListItem key={item.text} disablePadding>
+                      <ListItemButton
+                        component={Link}
+                        to={item.path}
+                        selected={location.pathname === item.path}
+                        sx={{
+                          "&:hover": {
+                            backgroundColor: theme.palette.action.hover,
+                            transform: "translateX(5px)",
+                            transition: "transform 0.2s ease-in-out",
+                          },
+                          "&.Mui-selected": {
+                            borderLeft: `4px solid ${theme.palette.primary.main}`,
+                            backgroundColor: theme.palette.action.selected,
+                          },
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{ color: theme.palette.text.primary }}
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText primary={item.text} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </AccordionDetails>
+            </Accordion>
+          ) : null
+        )}
       </List>
     </Drawer>
   );

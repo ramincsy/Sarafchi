@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import {
   Box,
   Grid,
@@ -27,6 +27,7 @@ import CardToIban from "components/common/jibit/CardToIban";
 import IbanInquiry from "components/common/jibit/IbanInquiry";
 import WithdrawalsService from "services/WithdrawalsService";
 import { getUserID } from "utils/userUtils";
+import AuthContext from "contexts/AuthContext"; // AuthContext را import کنید
 
 const TabPanel = ({ children, value, index }) => {
   return (
@@ -39,6 +40,7 @@ const TabPanel = ({ children, value, index }) => {
     </Box>
   );
 };
+
 const WithdrawPage = () => {
   const [accountNumber, setAccountNumber] = useState("");
   const [personName, setPersonName] = useState("");
@@ -50,18 +52,25 @@ const WithdrawPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const theme = useTheme();
 
+  // دریافت userInfo از کانتکست
+  const { userInfo } = useContext(AuthContext);
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
   const fetchWithdrawals = async () => {
+    console.log("Fetching withdrawals...");
     try {
       const data = await WithdrawalsService.fetchWithdrawals();
+      console.log("Withdrawals data received:", data);
       if (data.success) {
         setWithdrawHistory(data.data);
       } else {
         setError(data.error || "خطا در دریافت داده‌ها");
       }
     } catch (err) {
+      console.error("Error fetching withdrawals:", err);
       setError("خطا در دریافت تاریخچه برداشت.");
     }
   };
@@ -71,23 +80,25 @@ const WithdrawPage = () => {
   }, []);
 
   const handleWithdraw = async () => {
-    // دریافت user_id
-    const user_id = getUserID();
+    console.log("Handling withdraw...");
+    const user_id = getUserID(userInfo); // استخراج فقط UserID
+    console.log("User ID:", user_id);
+
     if (!user_id) {
+      console.error("User ID is missing.");
       setError("خطا در دریافت شناسه کاربر. لطفاً دوباره وارد شوید.");
       return;
     }
 
-    // بررسی تکمیل بودن فیلدها
     if (!accountNumber || !personName || !rialAmount) {
+      console.error("All fields are required.");
       setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
 
-    // ساخت payload
     const payload = {
       UserID: user_id,
-      Amount: parseFloat(rialAmount), // تبدیل مقدار به عدد
+      Amount: parseFloat(rialAmount),
       CurrencyType: "ریال",
       IBAN: accountNumber,
       AccountHolderName: personName,
@@ -97,28 +108,26 @@ const WithdrawPage = () => {
       CreatedBy: user_id,
     };
 
-    try {
-      // ارسال درخواست به سرور
-      const response = await WithdrawalsService.createWithdrawal(payload);
+    console.log("Payload to be sent:", payload);
 
-      // بررسی موفقیت آمیز بودن درخواست
+    try {
+      console.log("Sending withdrawal request...");
+      const response = await WithdrawalsService.createWithdrawal(payload);
+      console.log("Withdrawal response:", response);
+
       if (response.success) {
         setSuccess("درخواست برداشت شما با موفقیت ثبت شد.");
         setError(null);
-
-        // پاک کردن فیلدها
         setAccountNumber("");
         setPersonName("");
         setRialAmount("");
-
-        // به‌روزرسانی تاریخچه
         fetchWithdrawals();
       } else {
         setError(response.error || "خطا در ثبت درخواست برداشت.");
         setSuccess(null);
       }
     } catch (err) {
-      console.error("خطا در ثبت درخواست برداشت:", err);
+      console.error("Error in withdrawal request:", err);
       setError("خطا در ثبت درخواست برداشت. لطفاً مجدد تلاش کنید.");
       setSuccess(null);
     }
@@ -142,7 +151,7 @@ const WithdrawPage = () => {
             sx={{
               boxShadow: 6,
               borderRadius: 2,
-              height: 400, // ارتفاع ثابت
+              height: 400,
               backgroundColor: "#373B44",
               color: "white",
               display: "flex",
@@ -154,7 +163,7 @@ const WithdrawPage = () => {
               title="فرم برداشت"
               sx={{
                 textAlign: "center",
-                color: "#FFD700", // طلایی
+                color: "#FFD700",
                 fontWeight: "bold",
                 fontSize: "1.5rem",
                 borderBottom: "2px solid rgba(255, 255, 255, 0.2)",
@@ -177,14 +186,14 @@ const WithdrawPage = () => {
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   InputLabelProps={{
-                    style: { color: "white" }, // رنگ لیبل
+                    style: { color: "white" },
                   }}
                   sx={{
                     backgroundColor: "#50597b",
                     borderRadius: 1,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      color: "white", // رنگ متن ورودی
+                      color: "white",
                     },
                     "& .MuiOutlinedInput-notchedOutline": {
                       borderColor: "#FFD700",

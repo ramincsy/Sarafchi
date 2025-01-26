@@ -23,8 +23,29 @@ from page_routes import page_bp
 from live_price_routes import live_price_bp
 from token_utils import token_bp
 from datetime import datetime, timedelta
+from trx_wallet_routes import trx_wallet_bp  
+from get_balance_usdt import balances_bp2
+from deposits import deposits_bp
+from notifications_routes import notifications_bp
+from user_models import db, Notification
+from push_notification_manager import push_notification_bp  # تغییر این خط
+from usdt_withdrawals_routes import usdt_withdrawals_bp
+from FinancialDashboard import financial_dashboard_bp
+
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+# CORS(app, supports_credentials=True, resources={
+#     r"/api/*": {
+#         "origins": ["http://localhost:3000", "https://06ab-2a0d-3344-303d-b910-dc0a-e544-8900-e988.ngrok-free.app"]
+#     }
+# })
+
+CORS(app, supports_credentials=True, resources={
+    r"/api/*": {
+        "origins": "*",  # اجازه دسترسی به همه دامنه‌ها
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # اجازه تمام متدهای HTTP
+        "allow_headers": ["Content-Type", "Authorization"]  # اجازه هدرهای مورد نیاز
+    }
+})
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@localhost/sarafchi-DB?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes'
@@ -52,7 +73,13 @@ app.register_blueprint(roles_permissions_bp,
                        url_prefix='/api/RolesPermissionsManager')
 app.register_blueprint(live_price_bp)
 app.register_blueprint(token_bp, url_prefix='/api')
-
+app.register_blueprint(trx_wallet_bp, url_prefix='/api')
+app.register_blueprint(balances_bp2, url_prefix='/api')
+app.register_blueprint(deposits_bp, url_prefix="/api")
+app.register_blueprint(notifications_bp, url_prefix="/api")
+app.register_blueprint(push_notification_bp, url_prefix="/api/push")
+app.register_blueprint(usdt_withdrawals_bp)
+app.register_blueprint(financial_dashboard_bp)
 
 @app.route('/test-db-connection', methods=['GET'])
 def test_db_connection():
@@ -63,6 +90,20 @@ def test_db_connection():
     except Exception as e:
         # در صورت وقوع خطا، پیام خطا را برگردانید
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.before_request
+def handle_options_request():
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+@app.route('/favicon.ico')
+def favicon():
+    return "", 204
 
 
 if __name__ == '__main__':

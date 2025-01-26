@@ -1,7 +1,7 @@
 // src/contexts/PermissionsContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "utils/axiosInstance";
-
+import { Box, Typography, CircularProgress, Skeleton } from "@mui/material";
 export const PermissionsContext = createContext();
 
 export const PermissionsProvider = ({ children }) => {
@@ -56,7 +56,20 @@ export const PermissionsProvider = ({ children }) => {
 
   return (
     <PermissionsContext.Provider value={{ permissions, roles, pages, loading }}>
-      {loading ? <div>در حال بارگذاری داده‌ها...</div> : children}
+      {loading ? (
+        <Box sx={{ p: 3 }}>
+          <Skeleton variant="text" width="60%" height={40} />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={200}
+            sx={{ mt: 2 }}
+          />
+          <Skeleton variant="text" width="80%" height={40} sx={{ mt: 2 }} />
+        </Box>
+      ) : (
+        children
+      )}
     </PermissionsContext.Provider>
   );
 };
