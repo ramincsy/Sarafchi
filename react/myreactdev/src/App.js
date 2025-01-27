@@ -6,7 +6,7 @@ import { AuthProvider } from "contexts/AuthContext";
 import { PermissionsProvider } from "contexts/PermissionsContext";
 import { DarkModeProvider, useDarkMode } from "contexts/DarkModeContext";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { lightTheme, darkTheme, glassTheme } from "themes/themes";
+import { lightTheme, darkTheme } from "themes/themes";
 import { publicRoutes, protectedRoutes } from "./routes/routes";
 import ProtectedRoute from "components/common/ProtectedRoute";
 

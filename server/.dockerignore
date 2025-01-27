@@ -1,0 +1,59 @@
+# نادیده گرفتن فولدرها و فایل‌های غیرضروری
+
+# Node.js dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Python dependencies
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info
+dist
+build
+
+# محیط‌های مجازی پایتون
+env/
+venv/
+.venv/
+
+# لاگ‌ها و فایل‌های موقت
+*.log
+*.tmp
+*.bak
+*.swp
+*.pid
+*.seed
+*.backup
+*.swm
+*.old
+
+# پایگاه داده و فایل‌های مرتبط
+*.sqlite3
+*.db
+*.sql
+*.pdb
+
+# فایل‌های سیستم
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Git files
+.git/
+.gitignore
+.gitmodules
+
+# Docker و CI/CD
+.dockerignore
+.docker-compose
+docker-compose.override.yml
+.env
+.env.*
+*.tar

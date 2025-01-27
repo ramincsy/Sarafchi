@@ -1,5 +1,12 @@
 import axiosInstance from "utils/axiosInstance";
 
+class CustomError extends Error {
+  constructor(message, details) {
+    super(message);
+    this.details = details;
+  }
+}
+
 const PushNotificationService = {
   // دریافت نوتیفیکیشن‌ها
   fetchNotifications: async (userId) => {
@@ -10,10 +17,10 @@ const PushNotificationService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
-      throw {
-        message: "Failed to fetch notifications",
-        details: error.response?.data || error.message,
-      };
+      throw new CustomError(
+        "Failed to fetch notifications",
+        error.response?.data || error.message
+      );
     }
   },
 
@@ -26,10 +33,10 @@ const PushNotificationService = {
       return response.data;
     } catch (error) {
       console.error("Error sending push notification:", error);
-      throw {
-        message: "Failed to send push notification",
-        details: error.response?.data || error.message,
-      };
+      throw new CustomError(
+        "Failed to send push notification",
+        error.response?.data || error.message
+      );
     }
   },
 
@@ -43,10 +50,10 @@ const PushNotificationService = {
       return response.data;
     } catch (error) {
       console.error("Error deleting notification:", error);
-      throw {
-        message: "Failed to delete notification",
-        details: error.response?.data || error.message,
-      };
+      throw new CustomError(
+        "Failed to delete notification",
+        error.response?.data || error.message
+      );
     }
   },
 
@@ -54,10 +61,10 @@ const PushNotificationService = {
   saveToken: async (token, userId) => {
     if (!userId || !token) {
       console.error("User ID or Token is missing");
-      throw {
-        message: "User ID or Token is missing",
-        details: "Please provide valid user ID and token.",
-      };
+      throw new CustomError(
+        "User ID or Token is missing",
+        "Please provide valid user ID and token."
+      );
     }
 
     try {
@@ -74,18 +81,16 @@ const PushNotificationService = {
         console.error("Response status:", error.response.status);
 
         if (error.response.status === 409) {
-          throw {
-            message: "Token already exists",
-            details: error.response.data,
-          };
+          throw new CustomError("Token already exists", error.response.data);
         }
       }
-      throw {
-        message: "Failed to save token",
-        details: error.response?.data || error.message,
-      };
+      throw new CustomError(
+        "Failed to save token",
+        error.response?.data || error.message
+      );
     }
   },
+
   // به‌روزرسانی توکن Firebase (در صورت نیاز)
   updateToken: async (userId, oldToken, newToken) => {
     try {
@@ -98,10 +103,10 @@ const PushNotificationService = {
       return response.data;
     } catch (error) {
       console.error("Error updating token:", error);
-      throw {
-        message: "Failed to update token",
-        details: error.response?.data || error.message,
-      };
+      throw new CustomError(
+        "Failed to update token",
+        error.response?.data || error.message
+      );
     }
   },
 };
