@@ -1,44 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import AdvancedTable from "components/tables/AdvancedTable";
+import ApiManager from "services/ApiManager";
+import { Button, Box } from "@mui/material";
 
-import "assets/styles/AllTransactionsPage.css";
-import ApiManager from "services/ApiManager"; // استفاده از ApiManager
 export default function AllTransactionsPage() {
-  const [transactions, setTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [error, setError] = useState(null);
+  // تابع واکشی تراکنش‌ها
+  const fetchTransactions = async () => {
+    const data = await ApiManager.TransactionsService.fetchTransactions();
+    if (Array.isArray(data)) {
+      // افزودن فیلد محاسبه‌شده "Amount" و فرمت تاریخ به هر تراکنش
+      return data.map((tx) => ({
+        ...tx,
+        Amount: (tx.Quantity * tx.Price).toLocaleString(),
+        TransactionDateTime: new Date(tx.TransactionDateTime).toLocaleString(),
+      }));
+    } else {
+      throw new Error("فرمت داده‌ها صحیح نیست.");
+    }
+  };
 
-  // واکشی تراکنش‌ها
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await ApiManager.TransactionsService.fetchTransactions();
-        if (Array.isArray(data)) {
-          setTransactions(data);
-          setFilteredTransactions(data);
-        } else {
-          setError("فرمت داده‌ها صحیح نیست.");
-        }
-      } catch (err) {
-        console.error("Error fetching transactions:", err);
-        setError("خطای شبکه یا سرور");
-      }
-    };
-
-    fetchTransactions();
-  }, []);
-  // تأیید تراکنش
+  // توابع عملیات: تأیید و لغو تراکنش
   const handleApprove = async (id) => {
     try {
-      const data = await ApiManager.TransactionsService.updateTransactionStatus(
-        id,
-        "confirm"
-      );
-      if (data.success) {
+      const response =
+        await ApiManager.TransactionsService.updateTransactionStatus(
+          id,
+          "confirm"
+        );
+      if (response.success) {
         alert("تراکنش تأیید شد");
-        updateTransactionStatus(id, "Approved");
+        // در صورت نیاز، وضعیت تراکنش را در لیست به‌روزرسانی کنید.
       } else {
-        alert(data.message || "خطا در تأیید تراکنش");
+        alert(response.message || "خطا در تأیید تراکنش");
       }
     } catch (err) {
       console.error("Error approving transaction:", err);
@@ -46,117 +39,72 @@ export default function AllTransactionsPage() {
     }
   };
 
-  // لغو تراکنش
   const handleReject = async (id) => {
     try {
-      const data = await ApiManager.TransactionsService.updateTransactionStatus(
-        id,
-        "cancel"
-      );
-      if (data.success) {
+      const response =
+        await ApiManager.TransactionsService.updateTransactionStatus(
+          id,
+          "cancel"
+        );
+      if (response.success) {
         alert("تراکنش لغو شد");
-        updateTransactionStatus(id, "Rejected");
+        // در صورت نیاز، وضعیت تراکنش را در لیست به‌روزرسانی کنید.
       } else {
-        alert(data.message || "خطا در لغو تراکنش");
+        alert(response.message || "خطا در لغو تراکنش");
       }
     } catch (err) {
       console.error("Error rejecting transaction:", err);
       alert("خطا در لغو تراکنش");
     }
   };
-  // به‌روزرسانی وضعیت تراکنش‌ها
-  const updateTransactionStatus = (id, status) => {
-    setTransactions((prev) =>
-      prev.map((tx) =>
-        tx.TransactionID === id ? { ...tx, Status: status } : tx
-      )
-    );
-    setFilteredTransactions((prev) =>
-      prev.map((tx) =>
-        tx.TransactionID === id ? { ...tx, Status: status } : tx
-      )
-    );
+
+  // تعریف کامپوننت عملیات: در صورتی که تراکنش در وضعیت "Processing" باشد، دو دکمه تأیید و لغو نمایش داده می‌شود.
+  const actions = (row) => {
+    if (row.Status === "Processing") {
+      return (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleApprove(row.TransactionID)}
+          >
+            تأیید
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => handleReject(row.TransactionID)}
+          >
+            لغو
+          </Button>
+        </Box>
+      );
+    }
+    return null;
   };
 
-  // فیلتر داده‌ها
-  const handleFilterChange = (e) => {
-    const query = e.target.value.toLowerCase();
-    setFilter(query);
-    setFilteredTransactions(
-      transactions.filter((tx) =>
-        Object.values(tx).some((value) =>
-          value?.toString().toLowerCase().includes(query)
-        )
-      )
-    );
-  };
+  // تعریف ستون‌های جدول
+  const columns = [
+    { field: "TransactionID", label: "شناسه" },
+    { field: "UserID", label: "کاربر" },
+    { field: "TransactionType", label: "نوع" },
+    { field: "CurrencyType", label: "ارز" },
+    { field: "Quantity", label: "تعداد" },
+    { field: "Price", label: "قیمت" },
+    { field: "Amount", label: "مبلغ" },
+    { field: "TransactionDateTime", label: "تاریخ" },
+    { field: "Status", label: "وضعیت" },
+  ];
 
   return (
     <div className="transactions-page-container">
       <h1>تمام تراکنش‌ها</h1>
-      {error && <div className="error">{error}</div>}
-      <div className="filter-container">
-        <input
-          type="text"
-          placeholder="فیلتر بر اساس هر فیلدی"
-          value={filter}
-          onChange={handleFilterChange}
-          className="filter-input"
-        />
-      </div>
-      <div className="transactions-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>شناسه</th>
-              <th>کاربر</th>
-              <th>نوع</th>
-              <th>ارز</th>
-              <th>تعداد</th>
-              <th>قیمت</th>
-              <th>مبلغ</th>
-              <th>تاریخ</th>
-              <th>وضعیت</th>
-              <th>عملیات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTransactions.map((tx) => (
-              <tr key={tx.TransactionID}>
-                <td>{tx.TransactionID}</td>
-                <td>{tx.UserID}</td>
-                <td>{tx.TransactionType}</td>
-                <td>{tx.CurrencyType}</td>
-                <td>{tx.Quantity}</td>
-                <td>{tx.Price}</td>
-                <td>{(tx.Quantity * tx.Price).toLocaleString()}</td>
-                <td>{new Date(tx.TransactionDateTime).toLocaleString()}</td>
-                <td className={`status ${tx.Status.toLowerCase()}`}>
-                  {tx.Status}
-                </td>
-                <td>
-                  {tx.Status === "Processing" && (
-                    <div className="actions">
-                      <button
-                        className="approve-btn"
-                        onClick={() => handleApprove(tx.TransactionID)}
-                      >
-                        تأیید
-                      </button>
-                      <button
-                        className="reject-btn"
-                        onClick={() => handleReject(tx.TransactionID)}
-                      >
-                        لغو
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdvancedTable
+        columns={columns}
+        fetchData={fetchTransactions}
+        actions={actions}
+        defaultPageSize={10}
+      />
     </div>
   );
 }

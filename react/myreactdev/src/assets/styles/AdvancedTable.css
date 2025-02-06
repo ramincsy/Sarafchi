@@ -1,0 +1,241 @@
+/* استایل کلی جدول */
+.advanced-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  margin-top: 20px;
+}
+
+/* استایل هدر جدول */
+.advanced-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.advanced-table-container thead {
+  background-color: #1976d2;
+  color: white;
+}
+
+.advanced-table-container th {
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* استایل سلول‌های جدول */
+.advanced-table-container td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* استایل ردیف‌های جدول */
+.advanced-table-container tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* استایل نوار جستجو */
+.advanced-table-search {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.advanced-table-search input {
+  width: 250px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* دکمه‌های عملیات */
+.advanced-table-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.advanced-table-actions button {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+.advanced-table-actions .approve-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.advanced-table-actions .approve-btn:hover {
+  background-color: #388e3c;
+}
+
+.advanced-table-actions .reject-btn {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.advanced-table-actions .reject-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* استایل مدیریت ستون‌ها */
+.column-visibility-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.column-visibility-toggle button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.column-visibility-toggle .active {
+  background-color: #1976d2;
+  color: white;
+}
+
+.column-visibility-toggle .inactive {
+  background-color: #ddd;
+  color: black;
+}
+
+/* تغییر اندازه ستون‌ها */
+.resizable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resizer {
+  width: 5px;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: transparent;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.resizer:hover {
+  background-color: #1976d2;
+}
+
+/* تغییر اندازه کل جدول */
+.table-resizer {
+  width: 10px;
+  height: 10px;
+  background-color: #1976d2;
+  cursor: nwse-resize;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border-radius: 50%;
+}
+
+/* استایل وضعیت */
+.status {
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* رنگ‌بندی وضعیت‌ها */
+.status.approved {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status.rejected {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.status.pending {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+/* لودینگ */
+.loading-container {
+  text-align: center;
+  padding: 20px;
+}
+
+/* پیام‌های خطا */
+.error-message {
+  color: #d32f2f;
+  background-color: #fddede;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* دکمه دانلود اکسل */
+.excel-download-btn {
+  background-color: #388e3c;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.excel-download-btn:hover {
+  background-color: #2e7d32;
+}
+
+/* استایل صفحه‌بندی */
+.advanced-table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+
+/* استایل ریسپانسیو */
+@media (max-width: 768px) {
+  .advanced-table-container {
+    padding: 10px;
+  }
+
+  .advanced-table-search {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .advanced-table-search input {
+    width: 100%;
+  }
+
+  .column-visibility-toggle {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .advanced-table-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .advanced-table-actions button {
+    width: 100%;
+  }
+}

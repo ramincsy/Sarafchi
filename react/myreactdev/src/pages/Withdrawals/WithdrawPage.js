@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import {
   Box,
   Grid,
@@ -11,24 +11,19 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  useTheme,
   Tabs,
   Tab,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CardToIban from "components/common/jibit/CardToIban";
 import IbanInquiry from "components/common/jibit/IbanInquiry";
 import WithdrawalsService from "services/WithdrawalsService";
 import { getUserID } from "utils/userUtils";
-import AuthContext from "contexts/AuthContext"; // AuthContext را import کنید
+import AuthContext from "contexts/AuthContext";
+import AdvancedTable from "components/tables/AdvancedTable";
 
+// TabPanel Component
 const TabPanel = ({ children, value, index }) => {
   return (
     <Box
@@ -48,8 +43,8 @@ const WithdrawPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isTableOpen, setTableOpen] = useState(false);
-  const [withdrawHistory, setWithdrawHistory] = useState([]);
   const [tabValue, setTabValue] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // برای رفرش کردن AdvancedTable
   const theme = useTheme();
 
   // دریافت userInfo از کانتکست
@@ -59,43 +54,43 @@ const WithdrawPage = () => {
     setTabValue(newValue);
   };
 
+  // تابع واکشی برداشت‌ها برای AdvancedTable
   const fetchWithdrawals = async () => {
-    console.log("Fetching withdrawals...");
     try {
-      const data = await WithdrawalsService.fetchWithdrawals();
-      console.log("Withdrawals data received:", data);
-      if (data.success) {
-        setWithdrawHistory(data.data);
+      const res = await WithdrawalsService.fetchWithdrawals();
+      if (res.success) {
+        // تبدیل داده‌ها به فرمت مورد انتظار AdvancedTable
+        return res.data.map((withdrawal, index) => ({
+          WithdrawalID: withdrawal.WithdrawalID || index,
+          UserID: withdrawal.UserID,
+          Amount: withdrawal.Amount,
+          CurrencyType: withdrawal.CurrencyType,
+          Status: withdrawal.Status,
+          // تبدیل تاریخ به فرمت فارسی
+          Date: new Date(withdrawal.WithdrawalDateTime).toLocaleString("fa-IR"),
+        }));
       } else {
-        setError(data.error || "خطا در دریافت داده‌ها");
+        setError(res.error || "خطا در دریافت داده‌ها");
+        return [];
       }
     } catch (err) {
       console.error("Error fetching withdrawals:", err);
       setError("خطا در دریافت تاریخچه برداشت.");
+      return [];
     }
   };
 
-  useEffect(() => {
-    fetchWithdrawals();
-  }, []);
-
+  // تابع ارسال درخواست برداشت
   const handleWithdraw = async () => {
-    console.log("Handling withdraw...");
-    const user_id = getUserID(userInfo); // استخراج فقط UserID
-    console.log("User ID:", user_id);
-
+    const user_id = getUserID(userInfo);
     if (!user_id) {
-      console.error("User ID is missing.");
       setError("خطا در دریافت شناسه کاربر. لطفاً دوباره وارد شوید.");
       return;
     }
-
     if (!accountNumber || !personName || !rialAmount) {
-      console.error("All fields are required.");
       setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
-
     const payload = {
       UserID: user_id,
       Amount: parseFloat(rialAmount),
@@ -107,21 +102,16 @@ const WithdrawPage = () => {
       Description: "درخواست برداشت ریالی",
       CreatedBy: user_id,
     };
-
-    console.log("Payload to be sent:", payload);
-
     try {
-      console.log("Sending withdrawal request...");
       const response = await WithdrawalsService.createWithdrawal(payload);
-      console.log("Withdrawal response:", response);
-
       if (response.success) {
         setSuccess("درخواست برداشت شما با موفقیت ثبت شد.");
         setError(null);
         setAccountNumber("");
         setPersonName("");
         setRialAmount("");
-        fetchWithdrawals();
+        setTableOpen(true);
+        setRefreshKey((prev) => prev + 1);
       } else {
         setError(response.error || "خطا در ثبت درخواست برداشت.");
         setSuccess(null);
@@ -133,17 +123,41 @@ const WithdrawPage = () => {
     }
   };
 
+  // ستون‌های جدول AdvancedTable (استفاده از useMemo برای جلوگیری از رندر مجدد غیر ضروری)
   const columns = useMemo(
-    () => ["شناسه", "کاربر", "مقدار", "نوع ارز", "وضعیت", "تاریخ"],
+    () => [
+      { field: "WithdrawalID", label: "شناسه" },
+      { field: "UserID", label: "کاربر" },
+      { field: "Amount", label: "مقدار" },
+      { field: "CurrencyType", label: "نوع ارز" },
+      { field: "Status", label: "وضعیت" },
+      { field: "Date", label: "تاریخ" },
+    ],
     []
   );
+
+  // تابع تعیین رنگ پس‌زمینه ردیف‌ها بر اساس وضعیت تراکنش
+  const getRowBgColor = (status) => {
+    switch (status) {
+      case "Approved":
+      case "Completed":
+        return "#d0f0c0"; // سبز روشن
+      case "Rejected":
+      case "Canceled":
+        return "#f0d0d0"; // قرمز روشن
+      case "Pending":
+      case "Processing":
+        return "#fffacd"; // زرد ملایم
+      default:
+        return "#ffffff"; // سفید
+    }
+  };
 
   return (
     <Box sx={{ padding: 4, backgroundColor: theme.palette.background.default }}>
       <Typography variant="h4" textAlign="center" mb={4}>
         صفحه برداشت
       </Typography>
-
       <Grid container spacing={4} justifyContent="center">
         {/* فرم برداشت */}
         <Grid item xs={12} sm={6}>
@@ -179,82 +193,70 @@ const WithdrawPage = () => {
                 justifyContent: "center",
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="شماره شبا"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  InputLabelProps={{
-                    style: { color: "white" },
-                  }}
-                  sx={{
-                    backgroundColor: "#50597b",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      color: "white",
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFD700",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFC300",
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="نام صاحب حساب"
-                  value={personName}
-                  onChange={(e) => setPersonName(e.target.value)}
-                  InputLabelProps={{
-                    style: { color: "white" },
-                  }}
-                  sx={{
-                    backgroundColor: "#50597b",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      color: "white",
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFD700",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFC300",
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="مقدار درخواست برداشت"
-                  type="number"
-                  value={rialAmount}
-                  onChange={(e) => setRialAmount(e.target.value)}
-                  InputLabelProps={{
-                    style: { color: "white" },
-                  }}
-                  sx={{
-                    backgroundColor: "#50597b",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      color: "white",
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFD700",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#FFC300",
-                    },
-                  }}
-                />
-              </Box>
+              <TextField
+                fullWidth
+                label="شماره شبا"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                InputLabelProps={{ style: { color: "white" } }}
+                sx={{
+                  backgroundColor: "#50597b",
+                  borderRadius: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    color: "white",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFD700",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFC300",
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="نام صاحب حساب"
+                value={personName}
+                onChange={(e) => setPersonName(e.target.value)}
+                InputLabelProps={{ style: { color: "white" } }}
+                sx={{
+                  backgroundColor: "#50597b",
+                  borderRadius: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    color: "white",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFD700",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFC300",
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="مقدار درخواست برداشت"
+                type="number"
+                value={rialAmount}
+                onChange={(e) => setRialAmount(e.target.value)}
+                InputLabelProps={{ style: { color: "white" } }}
+                sx={{
+                  backgroundColor: "#50597b",
+                  borderRadius: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    color: "white",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFD700",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#FFC300",
+                  },
+                }}
+              />
               <Button
                 fullWidth
                 variant="contained"
@@ -322,20 +324,13 @@ const WithdrawPage = () => {
                   backgroundColor: "#50597b",
                   borderRadius: 1,
                   mb: 2,
-                  "& .MuiTab-root": {
-                    color: "white",
-                    fontWeight: "bold",
-                  },
-                  "& .Mui-selected": {
-                    color: "#FFD700",
-                  },
+                  "& .MuiTab-root": { color: "white", fontWeight: "bold" },
+                  "& .Mui-selected": { color: "#FFD700" },
                 }}
               >
                 <Tab label="کارت به شبا" />
                 <Tab label="استعلام شبا" />
               </Tabs>
-
-              {/* نمایش تب‌ها */}
               <TabPanel value={tabValue} index={0}>
                 <CardToIban
                   title="Card to IBAN Inquiry"
@@ -370,6 +365,8 @@ const WithdrawPage = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* بخش تاریخچه برداشت‌ها با استفاده از AdvancedTable */}
       <Accordion
         expanded={isTableOpen}
         onChange={() => setTableOpen(!isTableOpen)}
@@ -382,33 +379,13 @@ const WithdrawPage = () => {
           <Typography variant="h6">تاریخچه برداشت‌ها</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  {columns.map((col) => (
-                    <TableCell key={col} align="center">
-                      {col}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {withdrawHistory.map((row, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell align="center">{row.WithdrawalID}</TableCell>
-                    <TableCell align="center">{row.UserID}</TableCell>
-                    <TableCell align="center">{row.Amount}</TableCell>
-                    <TableCell align="center">{row.CurrencyType}</TableCell>
-                    <TableCell align="center">{row.Status}</TableCell>
-                    <TableCell align="center">
-                      {new Date(row.WithdrawalDateTime).toLocaleString("fa-IR")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <AdvancedTable
+            key={refreshKey}
+            columns={columns}
+            fetchData={fetchWithdrawals}
+            defaultPageSize={10}
+            getCardBgColor={getRowBgColor}
+          />
         </AccordionDetails>
       </Accordion>
     </Box>

@@ -19,12 +19,23 @@ const messaging = getMessaging(app);
 
 // درخواست توکن برای Push Notifications
 export const requestForToken = async () => {
+  if (!("serviceWorker" in navigator)) {
+    console.warn("Service Worker is not supported in this browser.");
+    return null;
+  }
+
   try {
     const registration = await registerServiceWorker();
+    if (!registration) {
+      console.warn("Service Worker registration failed.");
+      return null;
+    }
+
     const currentToken = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,
     });
+
     if (currentToken) {
       console.log("Token received:", currentToken);
       try {
@@ -44,7 +55,7 @@ export const requestForToken = async () => {
     }
   } catch (err) {
     console.error("Error retrieving token:", err);
-    throw new Error("Failed to retrieve Firebase token.");
+    return null;
   }
 };
 

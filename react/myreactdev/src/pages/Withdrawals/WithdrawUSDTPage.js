@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useMemo, useContext } from "react";
 import {
   Box,
   Card,
@@ -8,61 +8,59 @@ import {
   TextField,
   Button,
   Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Paper,
-  TablePagination,
+  useTheme,
 } from "@mui/material";
 import WithdrawalsUSDTService from "services/WithdrawalsUSDTService";
-import AuthContext from "contexts/AuthContext"; // AuthContext را import کنید
+import AuthContext from "contexts/AuthContext";
 import { getUserID } from "utils/userUtils";
+import AdvancedTable from "components/tables/AdvancedTable";
+
 const WithdrawUSDTPage = () => {
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
-  const [withdrawHistory, setWithdrawHistory] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [refreshKey, setRefreshKey] = useState(0); // برای رفرش کردن AdvancedTable
+  const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
-  const user_id = getUserID(userInfo); // استخراج فقط UserID
+  const user_id = getUserID(userInfo);
   console.log("User ID:", user_id);
 
-  const fetchWithdrawals = async () => {
+  // تابع واکشی برداشت‌ها برای AdvancedTable
+  const fetchData = async () => {
     try {
-      const data = await WithdrawalsUSDTService.fetchAllWithdrawals();
-      if (data.success) {
-        setWithdrawHistory(data.data);
-        setError(null);
+      const res = await WithdrawalsUSDTService.fetchAllWithdrawals();
+      if (res.success) {
+        return res.data.map((withdrawal, index) => ({
+          WithdrawalID: withdrawal.WithdrawalID || index,
+          Amount: withdrawal.Amount,
+          DestinationAddress: withdrawal.DestinationAddress,
+          Status: withdrawal.Status,
+          // تبدیل تاریخ به فرمت فارسی
+          Date: new Date(withdrawal.WithdrawalDateTime).toLocaleString("fa-IR"),
+        }));
       } else {
-        setError(data.error || "خطا در دریافت تاریخچه برداشت.");
+        setError(res.error || "خطا در دریافت تاریخچه برداشت.");
+        return [];
       }
     } catch (err) {
       console.error("Error fetching withdrawals:", err);
       setError("خطا در دریافت تاریخچه برداشت.");
+      return [];
     }
   };
 
-  useEffect(() => {
-    fetchWithdrawals();
-  }, []);
-
+  // تابع ارسال درخواست برداشت
   const handleWithdraw = async () => {
     if (!amount || !destinationAddress) {
       setError("لطفاً تمام فیلدها را پر کنید.");
       return;
     }
-
     const payload = {
       UserID: user_id,
       Amount: parseFloat(amount),
       DestinationAddress: destinationAddress,
     };
-
     try {
       const response = await WithdrawalsUSDTService.createWithdrawal(payload);
       if (response.success) {
@@ -70,7 +68,7 @@ const WithdrawUSDTPage = () => {
         setError(null);
         setAmount("");
         setDestinationAddress("");
-        fetchWithdrawals();
+        setRefreshKey((prev) => prev + 1);
       } else {
         setError(response.error || "خطا در ثبت درخواست برداشت.");
         setSuccess(null);
@@ -82,59 +80,42 @@ const WithdrawUSDTPage = () => {
     }
   };
 
-  const handleApprove = async (withdrawalId) => {
-    try {
-      const response = await WithdrawalsUSDTService.approveWithdrawal({
-        WithdrawalID: withdrawalId,
-        StatusChangedBy: user_id,
-        TransactionTxID: `TXID-${withdrawalId}`,
-      });
-      if (response.success) {
-        setSuccess("تراکنش با موفقیت تایید شد.");
-        fetchWithdrawals();
-      } else {
-        setError(response.error || "خطا در تایید تراکنش.");
-      }
-    } catch (err) {
-      console.error("Error approving withdrawal:", err);
-      setError("خطا در تایید تراکنش.");
+  // تعریف ستون‌های AdvancedTable به صورت useMemo (برای جلوگیری از رندر مجدد غیر ضروری)
+  const columns = useMemo(
+    () => [
+      { field: "WithdrawalID", label: "شناسه" },
+      { field: "Amount", label: "مقدار" },
+      { field: "DestinationAddress", label: "آدرس مقصد" },
+      { field: "Status", label: "وضعیت" },
+      { field: "Date", label: "تاریخ" },
+    ],
+    []
+  );
+
+  // تابع تعیین رنگ پس‌زمینه ردیف‌ها بر اساس وضعیت برداشت
+  const getRowBgColor = (status) => {
+    switch (status) {
+      case "Approved":
+      case "Completed":
+        return "#d0f0c0"; // سبز روشن
+      case "Rejected":
+      case "Canceled":
+        return "#f0d0d0"; // قرمز روشن
+      case "Pending":
+      case "Processing":
+        return "#fffacd"; // زرد ملایم
+      default:
+        return "#ffffff"; // سفید
     }
-  };
-
-  const handleReject = async (withdrawalId) => {
-    try {
-      const response = await WithdrawalsUSDTService.rejectWithdrawal({
-        WithdrawalID: withdrawalId,
-        StatusChangedBy: user_id,
-      });
-      if (response.success) {
-        setSuccess("تراکنش با موفقیت لغو شد.");
-        fetchWithdrawals();
-      } else {
-        setError(response.error || "خطا در لغو تراکنش.");
-      }
-    } catch (err) {
-      console.error("Error rejecting withdrawal:", err);
-      setError("خطا در لغو تراکنش.");
-    }
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
   };
 
   return (
-    <Box sx={{ padding: 4 }}>
+    <Box sx={{ padding: 4, backgroundColor: theme.palette.background.default }}>
       <Typography variant="h4" textAlign="center" mb={4}>
         درخواست برداشت USDT
       </Typography>
-
       <Grid container spacing={4}>
+        {/* فرم درخواست برداشت */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
@@ -179,6 +160,7 @@ const WithdrawUSDTPage = () => {
           </Card>
         </Grid>
 
+        {/* تاریخچه برداشت‌ها با استفاده از AdvancedTable */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
@@ -186,69 +168,12 @@ const WithdrawUSDTPage = () => {
               sx={{ textAlign: "center", fontWeight: "bold" }}
             />
             <CardContent>
-              <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="center">شناسه</TableCell>
-                      <TableCell align="center">مقدار</TableCell>
-                      <TableCell align="center">آدرس مقصد</TableCell>
-                      <TableCell align="center">وضعیت</TableCell>
-                      <TableCell align="center">عملیات</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {withdrawHistory
-                      .slice(
-                        page * rowsPerPage,
-                        page * rowsPerPage + rowsPerPage
-                      )
-                      .map((row) => (
-                        <TableRow key={row.WithdrawalID}>
-                          <TableCell align="center">
-                            {row.WithdrawalID}
-                          </TableCell>
-                          <TableCell align="center">{row.Amount}</TableCell>
-                          <TableCell align="center">
-                            {row.DestinationAddress}
-                          </TableCell>
-                          <TableCell align="center">{row.Status}</TableCell>
-                          <TableCell align="center">
-                            {row.Status === "Pending" && (
-                              <>
-                                <Button
-                                  variant="contained"
-                                  color="success"
-                                  onClick={() =>
-                                    handleApprove(row.WithdrawalID)
-                                  }
-                                  sx={{ marginRight: 1 }}
-                                >
-                                  تایید
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  onClick={() => handleReject(row.WithdrawalID)}
-                                >
-                                  لغو
-                                </Button>
-                              </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[10, 25, 100]}
-                component="div"
-                count={withdrawHistory.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+              <AdvancedTable
+                key={refreshKey} // تغییر key باعث re-mount و واکشی مجدد داده‌ها می‌شود
+                columns={columns}
+                fetchData={fetchData}
+                defaultPageSize={10}
+                getCardBgColor={getRowBgColor}
               />
             </CardContent>
           </Card>

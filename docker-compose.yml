@@ -1,11 +1,9 @@
-
-
 services:
   backend:
     build:
       context: ./server
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
       - ./server:/app
     environment:
@@ -22,7 +20,7 @@ services:
     build:
       context: ./react/myreactdev
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./react/myreactdev:/app
     stdin_open: true

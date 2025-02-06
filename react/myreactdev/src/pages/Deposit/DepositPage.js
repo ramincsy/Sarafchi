@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useContext } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   Box,
@@ -9,20 +9,14 @@ import {
   Card,
   CardContent,
   CardHeader,
-  useMediaQuery,
-  useTheme,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   IconButton,
+  useTheme,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { useTable, useGlobalFilter } from "react-table";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AdvancedTable from "components/tables/AdvancedTable";
+import AuthContext from "contexts/AuthContext";
 
 const mockDepositHistory = [
   { id: 1, type: "تتر", amount: 500, date: "2024-12-01" },
@@ -37,35 +31,37 @@ const DepositPage = () => {
   const [rialAmount, setRialAmount] = useState("");
   const [bankName, setBankName] = useState("");
   const [isTableOpen, setTableOpen] = useState(false);
-
-  const handleRialDeposit = () => {
-    alert("اطلاعات واریز ثبت شد. به لینک بعدی متصل خواهید شد.");
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { userInfo } = useContext(AuthContext);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert("آدرس کپی شد!");
   };
 
+  // تعریف ستون‌های AdvancedTable به صورت useMemo
   const columns = useMemo(
     () => [
-      { Header: "شناسه", accessor: "id" },
-      { Header: "نوع واریز", accessor: "type" },
-      { Header: "مقدار", accessor: "amount" },
-      { Header: "تاریخ", accessor: "date" },
+      { field: "id", label: "شناسه" },
+      { field: "type", label: "نوع واریز" },
+      { field: "amount", label: "مقدار" },
+      { field: "date", label: "تاریخ" },
     ],
     []
   );
 
-  const data = useMemo(() => mockDepositHistory, []);
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    setGlobalFilter,
-  } = useTable({ columns, data }, useGlobalFilter);
+  // تابع واکشی داده (در این مثال از داده‌های نمونه استفاده می‌شود)
+  const fetchData = async () => {
+    // در یک برنامه واقعی این تابع می‌تواند از API فراخوانی کند.
+    return mockDepositHistory;
+  };
+
+  // تابع تعیین رنگ پس‌زمینه ردیف‌ها بر اساس نوع واریز
+  const getRowBgColor = (type) => {
+    if (type === "تتر") return "#e0f7fa"; // آبی روشن
+    if (type === "ریال") return "#fce4ec"; // صورتی روشن
+    return "#ffffff";
+  };
 
   return (
     <Box
@@ -196,13 +192,8 @@ const DepositPage = () => {
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
               />
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                onClick={handleRialDeposit}
-              >
-                واریز
+              <Button fullWidth variant="contained" color="primary">
+                واریز ریال
               </Button>
             </CardContent>
           </Card>
@@ -211,59 +202,35 @@ const DepositPage = () => {
 
       {/* Deposit History */}
       <Box sx={{ mt: 6 }}>
-        <Typography
-          variant="h5"
+        <Box
           onClick={() => setTableOpen(!isTableOpen)}
           sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
-            textAlign: "center",
             mb: 2,
-            fontWeight: "bold",
           }}
         >
-          تاریخچه واریز
-          <Box component="span" sx={{ ml: 1 }}>
-            {isTableOpen ? <FaChevronUp /> : <FaChevronDown />}
-          </Box>
-        </Typography>
+          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+            تاریخچه واریز
+          </Typography>
+          <ExpandMoreIcon
+            sx={{
+              ml: 1,
+              transform: isTableOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.3s ease",
+            }}
+          />
+        </Box>
         {isTableOpen && (
-          <Box>
-            <TextField
-              fullWidth
-              placeholder="جستجو..."
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              sx={{ mb: 3 }}
-            />
-            <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
-              <Table {...getTableProps()}>
-                <TableHead>
-                  {headerGroups.map((headerGroup) => (
-                    <TableRow {...headerGroup.getHeaderGroupProps()}>
-                      {headerGroup.headers.map((column) => (
-                        <TableCell {...column.getHeaderProps()}>
-                          {column.render("Header")}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHead>
-                <TableBody {...getTableBodyProps()}>
-                  {rows.map((row) => {
-                    prepareRow(row);
-                    return (
-                      <TableRow {...row.getRowProps()}>
-                        {row.cells.map((cell) => (
-                          <TableCell {...cell.getCellProps()}>
-                            {cell.render("Cell")}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+          <AdvancedTable
+            key={refreshKey}
+            columns={columns}
+            fetchData={fetchData}
+            defaultPageSize={10}
+            getCardBgColor={(row) => getRowBgColor(row.type)}
+          />
         )}
       </Box>
     </Box>

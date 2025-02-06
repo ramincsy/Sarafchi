@@ -1,42 +1,38 @@
 import React, { useState, useEffect } from "react";
-
-import "assets/styles/AllWithdrawalsPage.css";
+import AdvancedTable from "components/tables/AdvancedTable";
 import WithdrawalsService from "services/WithdrawalsService";
+import { Button } from "@mui/material";
+import "assets/styles/AllWithdrawalsPage.css";
+
 export default function AllWithdrawalsPage() {
-  const [withdrawals, setWithdrawals] = useState([]);
   const [error, setError] = useState(null);
 
   // واکشی اطلاعات برداشت‌ها
-  useEffect(() => {
-    const fetchWithdrawals = async () => {
-      try {
-        const data = await WithdrawalsService.fetchWithdrawals(); // استفاده از سرویس
-        if (data.success) {
-          setWithdrawals(data.data);
-        } else {
-          setError("خطا در دریافت اطلاعات برداشت‌ها");
-        }
-      } catch (err) {
-        console.error("Error fetching withdrawals:", err);
-        setError("خطای شبکه یا سرور");
+  const fetchWithdrawals = async () => {
+    try {
+      const data = await WithdrawalsService.fetchWithdrawals();
+      if (data.success) {
+        return data.data;
+      } else {
+        setError("خطا در دریافت اطلاعات برداشت‌ها");
+        return [];
       }
-    };
-    fetchWithdrawals();
-  }, []);
+    } catch (err) {
+      console.error("Error fetching withdrawals:", err);
+      setError("خطای شبکه یا سرور");
+      return [];
+    }
+  };
 
-  const handleApproveWithdrawal = async (id) => {
+  // تأیید برداشت
+  const handleApproveWithdrawal = async (row) => {
     try {
       const data = await WithdrawalsService.updateWithdrawalStatus(
-        id,
+        row.WithdrawalID,
         "Approved"
-      ); // استفاده از سرویس
+      );
       if (data.success) {
         alert("برداشت تأیید شد");
-        setWithdrawals((prev) =>
-          prev.map((w) =>
-            w.WithdrawalID === id ? { ...w, Status: "Approved" } : w
-          )
-        );
       } else {
         alert(data.message || "خطا در تأیید برداشت");
       }
@@ -46,20 +42,15 @@ export default function AllWithdrawalsPage() {
     }
   };
 
-  // لغو برداشت
-  const handleRejectWithdrawal = async (id) => {
+  // رد برداشت
+  const handleRejectWithdrawal = async (row) => {
     try {
       const data = await WithdrawalsService.updateWithdrawalStatus(
-        id,
+        row.WithdrawalID,
         "Rejected"
-      ); // استفاده از سرویس
+      );
       if (data.success) {
         alert("برداشت لغو شد");
-        setWithdrawals((prev) =>
-          prev.map((w) =>
-            w.WithdrawalID === id ? { ...w, Status: "Rejected" } : w
-          )
-        );
       } else {
         alert(data.message || "خطا در لغو برداشت");
       }
@@ -69,67 +60,61 @@ export default function AllWithdrawalsPage() {
     }
   };
 
+  // تابع رندر دکمه‌های عملیات برای هر ردیف
+  const renderActions = (row) => {
+    const actions = [
+      {
+        label: "تأیید",
+        onClick: handleApproveWithdrawal,
+        color: "success",
+        condition: (row) => row.Status === "Pending",
+      },
+      {
+        label: "رد",
+        onClick: handleRejectWithdrawal,
+        color: "error",
+        condition: (row) => row.Status === "Pending",
+      },
+    ];
+
+    return (
+      <div style={{ display: "flex", gap: "8px" }}>
+        {actions.map((action) => {
+          if (action.condition && !action.condition(row)) return null;
+          return (
+            <Button
+              key={action.label}
+              variant="contained"
+              color={action.color}
+              onClick={() => action.onClick(row)}
+            >
+              {action.label}
+            </Button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="withdrawals-page-container">
       <h1>تمام برداشت‌ها</h1>
       {error && <div className="error">{error}</div>}
-      <div className="withdrawals-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>شناسه</th>
-              <th>کاربر</th>
-              <th>مقدار</th>
-              <th>نوع ارز</th>
-              <th>شماره شبا</th>
-              <th>نام صاحب حساب</th>
-              <th>تاریخ و ساعت</th>
-              <th>وضعیت</th>
-              <th>عملیات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {withdrawals.map((withdrawal) => (
-              <tr key={withdrawal.WithdrawalID}>
-                <td>{withdrawal.WithdrawalID}</td>
-                <td>{withdrawal.UserID}</td>
-                <td>{withdrawal.Amount.toLocaleString()}</td>
-                <td>{withdrawal.CurrencyType}</td>
-                <td>{withdrawal.IBAN}</td>
-                <td>{withdrawal.AccountHolderName}</td>
-                <td>
-                  {new Date(withdrawal.WithdrawalDateTime).toLocaleString()}
-                </td>
-                <td className={`status ${withdrawal.Status.toLowerCase()}`}>
-                  {withdrawal.Status}
-                </td>
-                <td>
-                  {withdrawal.Status === "Pending" && (
-                    <div className="actions">
-                      <button
-                        className="approve-btn"
-                        onClick={() =>
-                          handleApproveWithdrawal(withdrawal.WithdrawalID)
-                        }
-                      >
-                        تأیید
-                      </button>
-                      <button
-                        className="reject-btn"
-                        onClick={() =>
-                          handleRejectWithdrawal(withdrawal.WithdrawalID)
-                        }
-                      >
-                        لغو
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+
+      <AdvancedTable
+        columns={[
+          { field: "WithdrawalID", label: "شناسه" },
+          { field: "UserID", label: "کاربر" },
+          { field: "Amount", label: "مقدار" },
+          { field: "CurrencyType", label: "نوع ارز" },
+          { field: "IBAN", label: "شماره شبا" },
+          { field: "AccountHolderName", label: "نام صاحب حساب" },
+          { field: "WithdrawalDateTime", label: "تاریخ و ساعت" },
+          { field: "Status", label: "وضعیت" },
+        ]}
+        fetchData={fetchWithdrawals}
+        actions={renderActions}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // src/contexts/PermissionsContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "utils/axiosInstance";
-import { Box, Typography, CircularProgress, Skeleton } from "@mui/material";
+import { Box, Skeleton } from "@mui/material";
 export const PermissionsContext = createContext();
 
 export const PermissionsProvider = ({ children }) => {

@@ -17,7 +17,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AuthContext from "contexts/AuthContext";
 import ApiManager from "services/ApiManager";
-import TransactionTable from "components/tables/TransactionTable";
+import AdvancedTable from "components/tables/AdvancedTable";
 
 const AutomaticTransaction = () => {
   const [price, setPrice] = useState(null);
@@ -25,12 +25,14 @@ const AutomaticTransaction = () => {
   const [total, setTotal] = useState(null);
   const [currency, setCurrency] = useState("USD");
   const [transactionType, setTransactionType] = useState("buy");
-  const [transactions, setTransactions] = useState([]);
+  // برای رفرش مجدد جدول بعد از عملیات تایید/رد
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const theme = useTheme();
-
   const { userInfo } = useContext(AuthContext);
   const getCurrentUserID = userInfo?.UserID;
+
+  // واکشی قیمت از API بر اساس ارز انتخابی
   useEffect(() => {
     const fetchPrice = async () => {
       try {
@@ -43,36 +45,46 @@ const AutomaticTransaction = () => {
     fetchPrice();
   }, [currency]);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await ApiManager.TransactionsService.fetchTransactions();
-        setTransactions(
-          data.map((transaction, index) => ({
-            id: transaction.TransactionID || index, // استفاده از TransactionID به عنوان id یا مقدار یکتا
-            date: new Date(transaction.TransactionDateTime).toLocaleString(
-              "fa-IR"
-            ),
-            type: transaction.TransactionType,
-            currency: transaction.CurrencyType,
-            price: transaction.Price,
-            quantity: transaction.Quantity,
-            total: transaction.Quantity * transaction.Price,
-          }))
-        );
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      }
-    };
-    fetchTransactions();
-  }, []);
+  // تابع واکشی داده برای AdvancedTable
+  const fetchData = async () => {
+    try {
+      const data = await ApiManager.TransactionsService.fetchTransactions();
+      return data.map((transaction, index) => ({
+        WithdrawalID: transaction.TransactionID || index,
+        UserID: transaction.UserID,
+        Amount: transaction.Quantity,
+        Currency: transaction.CurrencyType,
+        Price: transaction.Price,
+        Total: transaction.Quantity * transaction.Price,
+        Date: new Date(transaction.TransactionDateTime).toLocaleString("fa-IR"),
+        Status: transaction.Status || "Unknown",
+      }));
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      return [];
+    }
+  };
 
+  // ستون‌های جدول AdvancedTable
+  const columns = [
+    { field: "WithdrawalID", label: "شناسه" },
+    { field: "UserID", label: "کاربر" },
+    { field: "Amount", label: "مقدار" },
+    { field: "Currency", label: "ارز" },
+    { field: "Price", label: "قیمت" },
+    { field: "Total", label: "مجموع" },
+    { field: "Date", label: "تاریخ" },
+    { field: "Status", label: "وضعیت" },
+  ];
+
+  // کنترل تغییر تعداد و محاسبه مجموع بر اساس قیمت
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     setQuantity(value);
     setTotal(price && value ? value * price : null);
   };
 
+  // ثبت معامله جدید
   const handleSubmit = async (e) => {
     e.preventDefault();
     const transactionData = {
@@ -90,10 +102,8 @@ const AutomaticTransaction = () => {
       alert("تراکنش با موفقیت ثبت شد");
       setQuantity("");
       setTotal(null);
-      setTransactions((prev) => [
-        ...prev,
-        { ...transactionData, id: prev.length + 1 },
-      ]);
+      // در صورت نیاز رفرش جدول
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       alert("خطا در ثبت تراکنش");
     }
@@ -184,32 +194,22 @@ const AutomaticTransaction = () => {
 
       {/* جدول سمت راست */}
       <Grid item xs={12} md={8}>
-        <Accordion defaultExpanded sx={{ height: "calc(100vh - 300px)" }}>
+        <Accordion defaultExpanded sx={{ height: "auto" }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6">تاریخچه معاملات</Typography>
           </AccordionSummary>
           <AccordionDetails
             sx={{
-              height: "calc(100vh - 400px)",
-              overflow: "hidden",
+              // برای امکان اسکرول در صفحات موبایل
+              overflowY: "auto",
+              maxHeight: "70vh", // مقدار دلخواه
             }}
           >
-            <TransactionTable
-              transactions={transactions}
-              role="manager"
-              showApproveButton={true}
-              showRejectButton={true}
-              visibleColumns={[
-                "user",
-                "type",
-                "currency",
-                "quantity",
-                "price",
-                "total",
-                "date",
-                "status",
-                "actions",
-              ]}
+            <AdvancedTable
+              key={refreshKey}
+              columns={columns}
+              fetchData={fetchData}
+              defaultPageSize={10}
             />
           </AccordionDetails>
         </Accordion>

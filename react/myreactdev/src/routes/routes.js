@@ -34,15 +34,20 @@ import TestRefreshTokenPage from "pages/TestRefreshTokenPage";
 import UsersWalletsPage from "pages/Blockchain/Tron/UsersWalletsPage";
 import Notifications from "pages/Notifications";
 import SendNotificationPage from "pages/SendNotificationPage";
-import SendPushNotificationPage from "pages/SendPushNotificationPage";
+// import SendPushNotificationPage from "pages/SendPushNotificationPage";
 import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
 import FinancialDashboard from "pages/FinancialDashboard";
 // Route configurations
 export const publicRoutes = [
   {
+    path: "/",
+    element: <LoginPage />,
+  },
+  {
     path: "/login",
     element: <LoginPage />,
   },
+
   {
     path: "/ManualTokenRefreshTest",
     element: <ManualTokenRefreshTest />,
@@ -240,14 +245,14 @@ export const protectedRoutes = [
       </ProtectedRoute>
     ),
   },
-  {
-    path: "/SendPushNotificationPage",
-    element: (
-      <ProtectedRoute>
-        <SendPushNotificationPage />
-      </ProtectedRoute>
-    ),
-  },
+  // {
+  //   path: "/SendPushNotificationPage",
+  //   element: (
+  //     <ProtectedRoute>
+  //       <SendPushNotificationPage />
+  //     </ProtectedRoute>
+  //   ),
+  // },
   {
     path: "/WithdrawUSDTPage",
     element: (

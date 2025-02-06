@@ -1,61 +1,112 @@
-.transactions-page-container {
+/* استایل کلی صفحه */
+.withdrawals-page-container {
+  max-width: 1200px;
+  margin: auto;
   padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.filter-container {
+/* عنوان صفحه */
+.withdrawals-page-container h1 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
   margin-bottom: 20px;
 }
 
-.filter-input {
-  width: 100%;
+/* پیام‌های خطا */
+.error {
+  color: #d32f2f;
+  background-color: #fddede;
   padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
   border-radius: 5px;
+  text-align: center;
+  margin-bottom: 15px;
 }
 
-.transactions-table-container {
+/* استایل عمومی جدول */
+.withdrawals-table-container {
+  width: 100%;
   overflow-x: auto;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-th {
-  background-color: #f4f4f4;
-}
-
-.status.approved {
-  color: green;
-}
-
-.status.rejected {
-  color: red;
+/* دکمه‌های عملیات */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 .actions button {
-  margin: 5px;
-  padding: 5px 10px;
   border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 14px;
   cursor: pointer;
-  border-radius: 3px;
+  transition: background 0.3s ease-in-out;
 }
 
-.approve-btn {
+.actions .approve-btn {
   background-color: #4caf50;
   color: white;
 }
 
-.reject-btn {
-  background-color: #f44336;
+.actions .approve-btn:hover {
+  background-color: #388e3c;
+}
+
+.actions .reject-btn {
+  background-color: #d32f2f;
   color: white;
+}
+
+.actions .reject-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* استایل وضعیت برداشت */
+.status {
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* رنگ‌بندی وضعیت‌ها */
+.status.approved {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status.rejected {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.status.pending {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+/* استایل ریسپانسیو برای موبایل */
+@media (max-width: 768px) {
+  .withdrawals-page-container {
+    padding: 15px;
+  }
+
+  .withdrawals-page-container h1 {
+    font-size: 20px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .actions button {
+    width: 100%;
+  }
 }

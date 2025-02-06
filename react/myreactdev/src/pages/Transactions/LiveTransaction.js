@@ -16,8 +16,8 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AuthContext from "contexts/AuthContext";
-import ApiManager from "services/ApiManager";
-import TransactionTable from "components/tables/TransactionTable"; // مسیر کامپوننت جدول را بررسی کنید
+import TransactionService from "services/TransactionService";
+import AdvancedTable from "components/tables/AdvancedTable";
 
 const LiveTransaction = () => {
   const [price, setPrice] = useState("");
@@ -25,62 +25,113 @@ const LiveTransaction = () => {
   const [total, setTotal] = useState(null);
   const [currency, setCurrency] = useState("USD");
   const [transactionType, setTransactionType] = useState("buy");
-  const [transactions, setTransactions] = useState([]);
-
+  const [refreshKey, setRefreshKey] = useState(0); // برای رفرش مجدد جدول پس از تغییرات
   const theme = useTheme();
-
   const { userInfo } = useContext(AuthContext);
   const getCurrentUserID = userInfo?.UserID;
 
+  // واکشی قیمت زنده (هر 5 ثانیه)
   useEffect(() => {
     const fetchLivePrice = async () => {
       try {
-        const data = await ApiManager.TransactionsService.fetchPrice(currency);
+        const data = await TransactionService.fetchPrice(currency);
         setPrice(data.price);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching price:", error);
         setPrice(null);
       }
     };
 
     fetchLivePrice();
     const interval = setInterval(fetchLivePrice, 5000);
-
     return () => clearInterval(interval);
   }, [currency]);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await ApiManager.TransactionsService.fetchTransactions();
-        setTransactions(
-          data.map((transaction, index) => ({
-            id: transaction.TransactionID || index,
-            date: new Date(transaction.TransactionDateTime).toLocaleString(
-              "fa-IR"
-            ),
-            userID: transaction.UserID,
-            createdBy: transaction.CreatedBy,
-            quantity: transaction.Quantity,
-            price: transaction.Price,
-            total: transaction.Quantity * transaction.Price,
-            type: transaction.TransactionType,
-            status: transaction.Status,
-            currency: transaction.CurrencyType,
-          }))
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  // تابع واکشی داده برای AdvancedTable
+  const fetchData = async () => {
+    try {
+      const data = await TransactionService.fetchTransactions();
+      return data.map((transaction, index) => ({
+        id: transaction.TransactionID || index, // شناسه تراکنش به عنوان id
+        date: new Date(transaction.TransactionDateTime).toLocaleString("fa-IR"),
+        userID: transaction.UserID,
+        createdBy: transaction.CreatedBy,
+        quantity: transaction.Quantity,
+        price: transaction.Price,
+        total: transaction.Quantity * transaction.Price,
+        type: transaction.TransactionType,
+        Status: transaction.Status, // وضعیت تراکنش
+        currency: transaction.CurrencyType,
+      }));
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      return [];
+    }
+  };
 
-    fetchTransactions();
-  }, []);
+  // ستون‌های جدول AdvancedTable
+  const columns = [
+    { field: "id", label: "شناسه" },
+    { field: "userID", label: "کاربر" },
+    { field: "type", label: "نوع معامله" },
+    { field: "currency", label: "ارز" },
+    { field: "quantity", label: "تعداد" },
+    { field: "price", label: "قیمت" },
+    { field: "total", label: "مجموع" },
+    { field: "date", label: "تاریخ" },
+    { field: "Status", label: "وضعیت" },
+  ];
+
+  // توابع مربوط به تغییر وضعیت تراکنش
+  const confirmTransaction = async (row) => {
+    try {
+      // فراخوانی updateTransactionStatus با عمل "confirm"
+      await TransactionService.updateTransactionStatus(row.id, "confirm");
+      alert("تراکنش تایید شد");
+      setRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      alert("خطا در تایید تراکنش: " + error.message);
+    }
+  };
+
+  const cancelTransaction = async (row) => {
+    try {
+      await TransactionService.updateTransactionStatus(row.id, "cancel");
+      alert("تراکنش لغو شد");
+      setRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      alert("خطا در لغو تراکنش: " + error.message);
+    }
+  };
+
+  // دکمه‌های عملیاتی برای هر ردیف
+  const actions = (row) => (
+    <>
+      <Button
+        variant="contained"
+        color="success"
+        onClick={() => confirmTransaction(row)}
+        sx={{ mr: 1 }}
+      >
+        تایید
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        onClick={() => cancelTransaction(row)}
+      >
+        لغو
+      </Button>
+    </>
+  );
 
   const handleQuantityChange = (e) => {
-    setQuantity(e.target.value);
-    if (price && e.target.value) {
-      setTotal(e.target.value * price);
+    const value = e.target.value;
+    setQuantity(value);
+    if (price && value) {
+      setTotal(value * price);
+    } else {
+      setTotal(null);
     }
   };
 
@@ -97,16 +148,13 @@ const LiveTransaction = () => {
     };
 
     try {
-      await ApiManager.TransactionsService.createTransaction(transactionData);
+      await TransactionService.createTransaction(transactionData);
       alert("تراکنش با موفقیت ثبت شد");
       setQuantity("");
       setTotal(null);
-      setTransactions((prev) => [
-        ...prev,
-        { ...transactionData, id: prev.length + 1 },
-      ]);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      alert("خطا در ثبت تراکنش");
+      alert("خطا در ثبت تراکنش: " + error.message);
     }
   };
 
@@ -121,7 +169,7 @@ const LiveTransaction = () => {
             backgroundColor: theme.palette.background.paper,
             color: theme.palette.text.primary,
             borderRadius: 2,
-            height: "calc(100vh - 300px)", // ارتفاع هماهنگ با Accordion
+            height: "calc(100vh - 300px)",
           }}
         >
           <Typography variant="h5" gutterBottom>
@@ -139,7 +187,6 @@ const LiveTransaction = () => {
                 <MenuItem value="sell">فروش</MenuItem>
               </Select>
             </FormControl>
-
             <FormControl fullWidth margin="normal">
               <InputLabel>نوع ارز</InputLabel>
               <Select
@@ -153,7 +200,6 @@ const LiveTransaction = () => {
                 <MenuItem value="TRY">لیر</MenuItem>
               </Select>
             </FormControl>
-
             <TextField
               label="تعداد"
               type="number"
@@ -164,7 +210,6 @@ const LiveTransaction = () => {
               disabled={!price}
               sx={{ backgroundColor: theme.palette.background.default }}
             />
-
             <TextField
               label="قیمت"
               fullWidth
@@ -173,7 +218,6 @@ const LiveTransaction = () => {
               InputProps={{ readOnly: true }}
               sx={{ backgroundColor: theme.palette.background.default }}
             />
-
             <TextField
               label="مجموع"
               fullWidth
@@ -182,7 +226,6 @@ const LiveTransaction = () => {
               InputProps={{ readOnly: true }}
               sx={{ backgroundColor: theme.palette.background.default }}
             />
-
             <Button
               type="submit"
               variant="contained"
@@ -195,8 +238,7 @@ const LiveTransaction = () => {
           </form>
         </Paper>
       </Grid>
-
-      {/* جدول سمت راست */}
+      {/* جدول تاریخچه معاملات */}
       <Grid item xs={12} md={8}>
         <Accordion defaultExpanded sx={{ height: "calc(100vh - 300px)" }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -205,25 +247,15 @@ const LiveTransaction = () => {
           <AccordionDetails
             sx={{
               height: "calc(100vh - 400px)",
-              overflow: "hidden",
+              overflowY: "auto",
             }}
           >
-            <TransactionTable
-              transactions={transactions}
-              role="manager"
-              showApproveButton={true}
-              showRejectButton={true}
-              visibleColumns={[
-                "user",
-                "type",
-                "currency",
-                "quantity",
-                "price",
-                "total",
-                "date",
-                "status",
-                "actions",
-              ]}
+            <AdvancedTable
+              key={refreshKey} // تغییر key باعث re-mount و واکشی مجدد داده‌ها می‌شود
+              columns={columns}
+              fetchData={fetchData}
+              actions={actions}
+              defaultPageSize={10}
             />
           </AccordionDetails>
         </Accordion>

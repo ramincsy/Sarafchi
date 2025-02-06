@@ -3,31 +3,25 @@ import {
   Box,
   Typography,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
   Modal,
   TextField,
   Grid,
   useTheme,
+  IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+
 import AuthContext from "contexts/AuthContext";
 import UserService from "services/UserService";
-import WalletService from "services/WalletService";
+import AdvancedTable from "components/tables/AdvancedTable";
 
 export default function ManageUsers() {
   const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
-  const id = userInfo.UserID;
 
+  // استیت‌های مربوط به فرم (برای ایجاد/ویرایش کاربر)
   const [inputs, setInputs] = useState({
     firstName: "",
     lastName: "",
@@ -37,33 +31,25 @@ export default function ManageUsers() {
     password: "",
     walletAddress: "",
   });
-  const [users, setUsers] = useState([]);
+
+  // اگر این مقدار null باشد، در حالت «ایجاد کاربر» هستیم؛ اگر object باشد، در حال «ویرایش کاربر» هستیم
   const [editingUser, setEditingUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const fetchUsers = async () => {
-    try {
-      console.log(userInfo);
-      const data = await UserService.fetchUsers();
-      setUsers(data);
-    } catch (error) {
-      alert(`خطا در دریافت لیست کاربران: ${error}`);
-    }
-  };
+  // برای رفرش مجدد جدول پس از ایجاد/ویرایش/حذف
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  // تابع تغییر مقدار فیلدهای فرم
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setInputs((prevInputs) => ({ ...prevInputs, [name]: value }));
+    setInputs((prev) => ({ ...prev, [name]: value }));
   };
 
+  // تابع ارسال فرم (ایجاد یا ویرایش کاربر)
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // آماده‌سازی payload کاربر
+    // ساختار داده ارسالی به سرور
     const userPayload = {
       FirstName: inputs.firstName,
       LastName: inputs.lastName,
@@ -76,24 +62,21 @@ export default function ManageUsers() {
 
     try {
       if (editingUser) {
-        // ویرایش کاربر موجود
+        // ویرایش کاربر
         await UserService.updateUser(editingUser.ID, userPayload);
         alert("کاربر با موفقیت ویرایش شد");
       } else {
         // ایجاد کاربر جدید
         const response = await UserService.createUser(userPayload);
-
         if (response) {
-          const { userID, walletAddress } = response; // ساختار response.data مستقیم مدیریت می‌شود
-          alert(
-            `کاربر با موفقیت ایجاد شد! \n شناسه: ${
-              userID || "نامشخص"
-            } \n آدرس کیف پول: ${walletAddress || "نامشخص"}`
-          );
+          const { userID, walletAddress } = response;
+          alert(`کاربر با موفقیت ایجاد شد!
+شناسه: ${userID || "نامشخص"}
+آدرس کیف پول: ${walletAddress || "نامشخص"}`);
         }
       }
 
-      // پاک کردن فرم و بستن مدال
+      // پاک کردن فرم
       setInputs({
         firstName: "",
         lastName: "",
@@ -104,23 +87,27 @@ export default function ManageUsers() {
         walletAddress: "",
       });
       setEditingUser(null);
-      fetchUsers();
       setModalOpen(false);
+      // رفرش جدول
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      // مدیریت خطا و نمایش پیام
       console.error("Error in handleSubmit:", error);
-      const errorMessage =
-        error.message || "خطای نامشخص در ذخیره کاربر. لطفاً دوباره تلاش کنید.";
-      alert(`خطا در ذخیره کاربر: ${errorMessage}`);
+      alert(
+        `خطا در ذخیره کاربر: ${
+          error.message || "خطای نامشخص، لطفاً دوباره تلاش کنید."
+        }`
+      );
     }
   };
 
+  // حذف کاربر
   const handleDelete = async (id) => {
     if (window.confirm("آیا مطمئن هستید که می‌خواهید این کاربر را حذف کنید؟")) {
       try {
         await UserService.deleteUser(id);
         alert("کاربر با موفقیت حذف شد");
-        fetchUsers();
+        // رفرش جدول
+        setRefreshKey((prev) => prev + 1);
       } catch (error) {
         console.log(error);
         alert(`خطا در حذف کاربر: ${error}`);
@@ -128,19 +115,62 @@ export default function ManageUsers() {
     }
   };
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
+  // ویرایش کاربر
+  const handleEdit = (row) => {
+    setEditingUser(row);
     setInputs({
-      firstName: user.FirstName,
-      lastName: user.LastName,
-      nationalID: user.NationalID,
-      phoneNumber: user.PhoneNumber,
-      email: user.Email,
+      firstName: row.FirstName,
+      lastName: row.LastName,
+      nationalID: row.NationalID,
+      phoneNumber: row.PhoneNumber,
+      email: row.Email,
       password: "",
-      walletAddress: user.WalletAddress,
+      walletAddress: row.WalletAddress || "",
     });
     setModalOpen(true);
   };
+
+  // تابع fetchData مخصوص AdvancedTable
+  // - اینجا ستون "Actions" را به صورت یک المان React (دکمه‌های ویرایش و حذف) مقداردهی می‌کنیم
+  const fetchData = async () => {
+    try {
+      const data = await UserService.fetchUsers();
+      return data.map((user) => ({
+        ID: user.ID,
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+        Email: user.Email,
+        PhoneNumber: user.PhoneNumber,
+        NationalID: user.NationalID,
+        WalletAddress: user.WalletAddress,
+        // ست کردن یک المان React به عنوان مقدار ستون Actions
+        Actions: (
+          <>
+            <IconButton color="primary" onClick={() => handleEdit(user)}>
+              <EditIcon />
+            </IconButton>
+            <IconButton color="error" onClick={() => handleDelete(user.ID)}>
+              <DeleteIcon />
+            </IconButton>
+          </>
+        ),
+      }));
+    } catch (error) {
+      alert(`خطا در دریافت لیست کاربران: ${error}`);
+      return [];
+    }
+  };
+
+  // ستون‌های AdvancedTable
+  // توجه کنید که ستون Actions نیز داریم تا مقدار React (دکمه‌های ویرایش و حذف) نمایش داده شود
+  const columns = [
+    { field: "FirstName", label: "نام" },
+    { field: "LastName", label: "نام خانوادگی" },
+    { field: "Email", label: "ایمیل" },
+    { field: "PhoneNumber", label: "شماره تلفن" },
+    { field: "NationalID", label: "کد ملی" },
+    { field: "Actions", label: "عملیات" },
+  ];
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -167,43 +197,18 @@ export default function ManageUsers() {
       >
         ایجاد کاربر جدید
       </Button>
-      <TableContainer component={Paper} sx={{ marginTop: 3 }}>
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              <TableCell>نام</TableCell>
-              <TableCell>نام خانوادگی</TableCell>
-              <TableCell>ایمیل</TableCell>
-              <TableCell>شماره تلفن</TableCell>
-              <TableCell>کد ملی</TableCell>
-              <TableCell align="center">عملیات</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.ID}>
-                <TableCell>{user.FirstName}</TableCell>
-                <TableCell>{user.LastName}</TableCell>
-                <TableCell>{user.Email}</TableCell>
-                <TableCell>{user.PhoneNumber}</TableCell>
-                <TableCell>{user.NationalID}</TableCell>
-                <TableCell align="center">
-                  <IconButton color="primary" onClick={() => handleEdit(user)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDelete(user.ID)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
 
+      {/* استفاده از AdvancedTable به جای MUI Table */}
+      <Box sx={{ marginTop: 3 }}>
+        <AdvancedTable
+          key={refreshKey} // تغییر در refreshKey باعث re-mount شدن جدول می‌شود
+          columns={columns}
+          fetchData={fetchData}
+          defaultPageSize={10}
+        />
+      </Box>
+
+      {/* مدال (Modal) برای ایجاد/ویرایش کاربر */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Box
           component="form"
@@ -283,7 +288,7 @@ export default function ManageUsers() {
                 value={inputs.password}
                 onChange={handleChange}
                 fullWidth
-                required={!editingUser}
+                required={!editingUser} // اگر در حال ویرایش باشیم، رمز عبور اجباری نیست
               />
             </Grid>
             <Grid item xs={12}>
@@ -297,9 +302,7 @@ export default function ManageUsers() {
               />
             </Grid>
           </Grid>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
             <Button type="submit" variant="contained" color="primary">
               {editingUser ? "ذخیره تغییرات" : "ایجاد کاربر"}
             </Button>
@@ -307,7 +310,7 @@ export default function ManageUsers() {
               onClick={() => setModalOpen(false)}
               variant="outlined"
               color="secondary"
-              sx={{ marginLeft: 1 }}
+              sx={{ ml: 1 }}
             >
               بستن
             </Button>
