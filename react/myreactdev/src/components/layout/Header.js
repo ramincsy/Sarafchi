@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useDarkMode } from "contexts/DarkModeContext";
-import { useTheme } from "@mui/material/styles"; // اضافه کردن useTheme
+import React, { useState } from 'react'
+import { useDarkMode } from 'contexts/DarkModeContext'
+import { useTheme } from '@mui/material/styles' // اضافه کردن useTheme
 import {
   AppBar,
   Box,
@@ -8,144 +8,143 @@ import {
   IconButton,
   Typography,
   InputBase,
-  Badge,
   MenuItem,
   Menu,
   styled,
   alpha,
-} from "@mui/material";
+} from '@mui/material'
 import {
   Menu as MenuIcon,
   Search as SearchIcon,
   AccountCircle,
-} from "@mui/icons-material";
-import SubHeader from "components/layout/SubHeader";
-import Sidebar from "components/layout/Sidebar";
-import { useNavigate } from "react-router-dom";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
-import NotificationIcon from "components/layout/NotificationIcon"; // آیکون نوتیفیکیشن
+} from '@mui/icons-material'
+import SubHeader from 'components/layout/SubHeader'
+import Sidebar from 'components/layout/Sidebar'
+import { useNavigate } from 'react-router-dom'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
+import Brightness7Icon from '@mui/icons-material/Brightness7'
+import NotificationIcon from 'components/layout/NotificationIcon' // آیکون نوتیفیکیشن
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
+const Search = styled('div')(({ theme }) => ({
+  position: 'relative',
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
+  '&:hover': {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
   marginRight: theme.spacing(2),
   marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
+  width: '100%',
+  [theme.breakpoints.up('sm')]: {
     marginLeft: theme.spacing(3),
-    width: "auto",
+    width: 'auto',
   },
-}));
+}))
 
-const SearchIconWrapper = styled("div")(({ theme }) => ({
+const SearchIconWrapper = styled('div')(({ theme }) => ({
   padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
+  height: '100%',
+  position: 'absolute',
+  pointerEvents: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}))
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
+  color: 'inherit',
+  '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '20ch',
     },
   },
-}));
+}))
 
-const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
-  const { mode, toggleDarkMode } = useDarkMode();
-  const theme = useTheme(); // استفاده از تم
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
+const Header = ({ onToggleSidebar, title = 'صرافچی' }) => {
+  const { mode, toggleDarkMode } = useDarkMode()
+  const theme = useTheme() // استفاده از تم
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null)
+  const [isSidebarOpen, setSidebarOpen] = useState(false)
+  const navigate = useNavigate()
 
   const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
-  };
+    setSidebarOpen(prev => !prev)
+  }
 
   const handleTitleClick = () => {
-    navigate("/DashboardPage");
-  };
+    navigate('/DashboardPage')
+  }
 
-  const isMenuOpen = Boolean(anchorEl);
-  const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+  const isMenuOpen = Boolean(anchorEl)
+  const isMobileMenuOpen = Boolean(mobileMoreAnchorEl)
 
   const handleMobileMenuClose = () => {
-    setMobileMoreAnchorEl(null);
-  };
+    setMobileMoreAnchorEl(null)
+  }
 
   const handleMenuClose = () => {
-    setAnchorEl(null);
-    handleMobileMenuClose();
-  };
+    setAnchorEl(null)
+    handleMobileMenuClose()
+  }
 
-  const handleMobileMenuOpen = (event) => {
-    setMobileMoreAnchorEl(event.currentTarget);
-  };
+  const handleMobileMenuOpen = event => {
+    setMobileMoreAnchorEl(event.currentTarget)
+  }
 
   const goToProfile = () => {
-    navigate("/ProfilePage");
-    handleMenuClose();
-  };
+    navigate('/ProfilePage')
+    handleMenuClose()
+  }
 
-  const menuId = "primary-search-account-menu";
+  const menuId = 'primary-search-account-menu'
   const renderMenu = (
     <Menu
       onClick={goToProfile}
       anchorEl={anchorEl}
       anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: 'top',
+        horizontal: 'right',
       }}
       id={menuId}
       keepMounted
       transformOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: 'top',
+        horizontal: 'right',
       }}
       open={isMenuOpen}
       onClose={handleMenuClose}
     ></Menu>
-  );
+  )
 
-  const mobileMenuId = "primary-search-account-menu-mobile";
+  const mobileMenuId = 'primary-search-account-menu-mobile'
   const renderMobileMenu = (
     <Menu
       anchorEl={mobileMoreAnchorEl}
       anchorOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: 'top',
+        horizontal: 'right',
       }}
       id={mobileMenuId}
       keepMounted
       transformOrigin={{
-        vertical: "top",
-        horizontal: "right",
+        vertical: 'top',
+        horizontal: 'right',
       }}
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
       sx={{
-        "& .MuiPaper-root": {
-          backdropFilter: "blur(10px)", // جلوه شیشه‌ای
+        '& .MuiPaper-root': {
+          backdropFilter: 'blur(10px)', // جلوه شیشه‌ای
           backgroundColor:
-            theme.palette.mode === "light"
-              ? "rgba(255, 255, 255, 0.8)" // پس‌زمینه شفاف برای تم لایت
-              : "rgba(18, 18, 18, 0.8)", // پس‌زمینه شفاف برای تم دارک
-          borderRadius: "12px", // گرد کردن گوشه‌ها
+            theme.palette.mode === 'light'
+              ? 'rgba(255, 255, 255, 0.8)' // پس‌زمینه شفاف برای تم لایت
+              : 'rgba(18, 18, 18, 0.8)', // پس‌زمینه شفاف برای تم دارک
+          borderRadius: '12px', // گرد کردن گوشه‌ها
           boxShadow: theme.shadows[4], // سایه ملایم
         },
       }}
@@ -156,13 +155,13 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
         <p>اعلان‌ها</p>
       </MenuItem>
     </Menu>
-  );
+  )
 
   return (
     <Box>
       {/* Header */}
       <AppBar
-        position="sticky"
+        position='sticky'
         sx={{
           backgroundColor: theme.palette.background.header, // استفاده از رنگ پس‌زمینه هدر از تم
           color: theme.palette.text.header, // استفاده از رنگ متن هدر از تم
@@ -171,19 +170,19 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
         <Toolbar>
           {/* دکمه منو */}
           <IconButton
-            size="large"
-            edge="start"
-            aria-label="open drawer"
+            size='large'
+            edge='start'
+            aria-label='open drawer'
             onClick={toggleSidebar}
             sx={{
               mr: 2,
               color: theme.palette.icons.menu, // استفاده از رنگ آیکون منو از تم
-              backgroundColor: "transparent", // حذف پس‌زمینه
-              "&:hover": {
-                backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
+              backgroundColor: 'transparent', // حذف پس‌زمینه
+              '&:hover': {
+                backgroundColor: 'transparent', // حذف پس‌زمینه در حالت hover
               },
-              "&:focus": {
-                backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
+              '&:focus': {
+                backgroundColor: 'transparent', // حذف پس‌زمینه در حالت focus
               },
             }}
           >
@@ -192,12 +191,12 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
 
           {/* عنوان هدر */}
           <Typography
-            variant="h6"
+            variant='h6'
             noWrap
-            component="div"
+            component='div'
             onClick={handleTitleClick}
             sx={{
-              display: { xs: "none", sm: "block" },
+              display: { xs: 'none', sm: 'block' },
               color: theme.palette.text.header, // استفاده از رنگ متن هدر از تم
             }}
           >
@@ -207,12 +206,12 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
           {/* بخش جستجو */}
           <Search>
             <SearchIconWrapper>
-              <SearchIcon sx={{ color: theme.palette.icons.search }} />{" "}
+              <SearchIcon sx={{ color: theme.palette.icons.search }} />{' '}
               {/* استفاده از رنگ آیکون جستجو از تم */}
             </SearchIconWrapper>
             <StyledInputBase
-              placeholder="جستجو…"
-              inputProps={{ "aria-label": "search" }}
+              placeholder='جستجو…'
+              inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
 
@@ -220,39 +219,39 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
           <Box sx={{ flexGrow: 1 }} />
 
           {/* بخش دسکتاپ */}
-          <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             {/* دکمه تغییر تم */}
             <IconButton
-              size="large"
-              aria-label="toggle dark mode"
+              size='large'
+              aria-label='toggle dark mode'
               onClick={toggleDarkMode}
               sx={{
                 ml: 2,
                 color: theme.palette.icons.modeToggle, // استفاده از رنگ آیکون تغییر تم از تم
-                backgroundColor: "transparent", // حذف پس‌زمینه
-                "&:hover": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
+                backgroundColor: 'transparent', // حذف پس‌زمینه
+                '&:hover': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت hover
                 },
-                "&:focus": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
+                '&:focus': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت focus
                 },
               }}
             >
-              {mode === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
+              {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
             </IconButton>
 
             {/* دکمه نوتیفیکیشن */}
             <IconButton
-              size="large"
-              aria-label="show notifications"
+              size='large'
+              aria-label='show notifications'
               sx={{
                 color: theme.palette.icons.notification, // استفاده از رنگ آیکون نوتیفیکیشن از تم
-                backgroundColor: "transparent", // حذف پس‌زمینه
-                "&:hover": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
+                backgroundColor: 'transparent', // حذف پس‌زمینه
+                '&:hover': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت hover
                 },
-                "&:focus": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
+                '&:focus': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت focus
                 },
               }}
             >
@@ -261,20 +260,20 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
 
             {/* دکمه پروفایل */}
             <IconButton
-              size="large"
-              edge="end"
-              aria-label="account of current user"
+              size='large'
+              edge='end'
+              aria-label='account of current user'
               aria-controls={menuId}
-              aria-haspopup="true"
+              aria-haspopup='true'
               onClick={goToProfile}
               sx={{
                 color: theme.palette.icons.profile, // استفاده از رنگ آیکون پروفایل از تم
-                backgroundColor: "transparent", // حذف پس‌زمینه
-                "&:hover": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
+                backgroundColor: 'transparent', // حذف پس‌زمینه
+                '&:hover': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت hover
                 },
-                "&:focus": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
+                '&:focus': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت focus
                 },
               }}
             >
@@ -283,22 +282,22 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
           </Box>
 
           {/* بخش موبایل */}
-          <Box sx={{ display: { xs: "flex", md: "none" } }}>
+          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
             {/* دکمه نوتیفیکیشن (جایگزین دکمه سه نقطه) */}
             <IconButton
-              size="large"
-              aria-label="show notifications"
+              size='large'
+              aria-label='show notifications'
               aria-controls={mobileMenuId}
-              aria-haspopup="true"
+              aria-haspopup='true'
               onClick={handleMobileMenuOpen}
               sx={{
                 color: theme.palette.icons.notification, // استفاده از رنگ آیکون نوتیفیکیشن از تم
-                backgroundColor: "transparent", // حذف پس‌زمینه
-                "&:hover": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
+                backgroundColor: 'transparent', // حذف پس‌زمینه
+                '&:hover': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت hover
                 },
-                "&:focus": {
-                  backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
+                '&:focus': {
+                  backgroundColor: 'transparent', // حذف پس‌زمینه در حالت focus
                 },
               }}
             >
@@ -312,11 +311,11 @@ const Header = ({ onToggleSidebar, title = "صرافچی" }) => {
       {renderMenu}
 
       {/* SubHeader */}
-      <Box sx={{ margin: 2 }}>
+      <Box sx={{ margin: 0.5 }}>
         <SubHeader />
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header
