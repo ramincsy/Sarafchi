@@ -4,7 +4,7 @@ from flask_marshmallow import Marshmallow  # type: ignore
 from user_routes import user_bp
 from balances_routes import balances_bp  # مسیر فایل Blueprint
 from transactions_routes import transactions_bp  # Import تراکنش‌ها
-from flask import Flask, request, jsonify  # type: ignore
+from flask import Flask, request, jsonify, send_from_directory  # type: ignore
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity, set_access_cookies, set_refresh_cookies, unset_jwt_cookies  # type: ignore
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean  # type: ignore
@@ -31,21 +31,19 @@ from user_models import db, Notification
 from push_notification_manager import push_notification_bp  # تغییر این خط
 from usdt_withdrawals_routes import usdt_withdrawals_bp
 from FinancialDashboard import financial_dashboard_bp
+from Iran_DateTime import get_iran_time
 
-app = Flask(__name__)
+build_folder = r'C:\inetpub\wwwroot\sarafchi'
+
+app = Flask(__name__, static_folder=build_folder, static_url_path='')
 # CORS(app, supports_credentials=True, resources={
 #     r"/api/*": {
 #         "origins": ["http://localhost:3000", "https://06ab-2a0d-3344-303d-b910-dc0a-e544-8900-e988.ngrok-free.app"]
 #     }
 # })
 
-CORS(app, supports_credentials=True, resources={
-    r"/api/*": {
-        "origins": "*",  # اجازه دسترسی به همه دامنه‌ها
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # اجازه تمام متدهای HTTP
-        "allow_headers": ["Content-Type", "Authorization"]  # اجازه هدرهای مورد نیاز
-    }
-})
+CORS(app, supports_credentials=True, static_folder=build_folder, static_url_path='' ,resources={r"/*": {"origins": "*"}})
+
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@localhost/sarafchi-DB?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes'
@@ -100,11 +98,29 @@ def handle_options_request():
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
+    
 
-@app.route('/favicon.ico')
-def favicon():
-    return "", 204
+# اضافه کردن endpoint جهت ارسال زمان رسمی تهران به فرانت‌اند
+@app.route('/api/get_iran_time', methods=['GET'])
+def get_iran_time_endpoint():
+    try:
+        current_time = get_iran_time()
+        # فرمت کردن زمان به صورت رشته به فرم "YYYY-MM-DD HH:mm:ss+03:30"
+        formatted_time = current_time.isoformat(' ')
+        return jsonify({"currentTime": formatted_time})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    # اگر فایل درخواست شده وجود داشته باشد، آن را سرو می‌کند
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    # در غیر این صورت، فایل index.html را باز می‌گرداند
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

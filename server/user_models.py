@@ -1,7 +1,8 @@
-from datetime import datetime
+# from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 from flask_marshmallow import Marshmallow  # type: ignore
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text  # type: ignore
+from Iran_DateTime import get_iran_time
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -19,9 +20,9 @@ class WalletsUSDT(db.Model):
     LockedBalance = db.Column(db.Float, default=0)  # موجودی قفل شده
     CurrencyType = db.Column(db.String(10), nullable=False, default="USDT")
     Status = db.Column(db.String(50), default="Active")
-    CreatedAt = db.Column(db.DateTime, default=datetime.utcnow)
+    CreatedAt = db.Column(db.DateTime, default=get_iran_time())
     LastUpdated = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        db.DateTime, default=get_iran_time(), onupdate=get_iran_time())
 
     def __repr__(self):
         return f"<WalletsUSDT {self.WalletAddress} - Balance: {self.Balance}>"
@@ -38,7 +39,7 @@ class Users(db.Model):
     Password = db.Column(db.String(255), nullable=False)
     CreatedBy = db.Column(db.String(100), nullable=False)
     WalletAddress = db.Column(db.String(255), nullable=True)
-    DateCreated = db.Column(db.DateTime, default=datetime.now)
+    DateCreated = db.Column(db.DateTime, default=get_iran_time())
     Status = db.Column(db.String(50), default="Active")  # وضعیت حساب کاربر
     LastLoginAt = db.Column(db.DateTime, nullable=True)  # آخرین زمان ورود
     FailedLoginAttempts = db.Column(
@@ -63,7 +64,7 @@ class JwtTokens(db.Model):
     UserId = db.Column(Integer, nullable=False)
     RefreshToken = db.Column(String(500), nullable=False)
     ExpireDate = db.Column(DateTime, nullable=False)
-    CreatedAt = db.Column(DateTime, nullable=False, default=datetime.now)
+    CreatedAt = db.Column(DateTime, nullable=False, default=get_iran_time())
     Revoked = db.Column(Boolean, nullable=False, default=False)
     IPAddress = db.Column(String(50), nullable=True)  # آدرس IP
     LastUsedAt = db.Column(DateTime, nullable=True)  # آخرین زمان استفاده
@@ -74,7 +75,7 @@ class JwtTokens(db.Model):
         self.UserId = user_id
         self.RefreshToken = refresh_token
         self.ExpireDate = expire_date
-        self.CreatedAt = datetime.now()
+        self.CreatedAt = get_iran_time()
         self.Revoked = False
         self.IPAddress = ip_address
         self.LastUsedAt = None
@@ -116,7 +117,7 @@ class Notification(db.Model):
     Title = db.Column(db.String(255), nullable=False)
     Message = db.Column(db.Text, nullable=False)
     IsRead = db.Column(db.Boolean, default=False)
-    Timestamp = db.Column(db.DateTime, default=datetime.now)
+    Timestamp = db.Column(db.DateTime, default=get_iran_time())
     Type = db.Column(db.String(50), nullable=True)
 
     def __repr__(self):
@@ -145,7 +146,7 @@ class PushNotifications(db.Model):
     SentAt = db.Column(db.DateTime, nullable=False)  # تاریخ و ساعت ارسال
     IsDelivered = db.Column(db.Boolean, nullable=False, default=False)  # وضعیت تحویل
     DeliveryDetails = db.Column(db.Text, nullable=True)  # جزئیات تحویل
-    CreatedAt = db.Column(db.DateTime, default=datetime.now)  # تاریخ و ساعت ایجاد رکورد
+    CreatedAt = db.Column(db.DateTime, default=get_iran_time())  # تاریخ و ساعت ایجاد رکورد
 
     def __repr__(self):
         return (

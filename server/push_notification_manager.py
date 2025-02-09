@@ -3,6 +3,7 @@ import asyncio
 from functools import wraps
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
+from Iran_DateTime import get_iran_time
 import firebase_admin
 from firebase_admin import credentials, messaging, exceptions
 from firebase_admin.exceptions import FirebaseError
@@ -110,7 +111,7 @@ async def send_push_notification_async(token: str, title: str, body: str, sender
             receiver_id=receiver_id,
             title=title,
             message=body,
-            sent_at=datetime.now(),
+            sent_at=get_iran_time(),
             is_delivered=True,  # ارسال موفقیت‌آمیز
             delivery_details=response
         )
@@ -360,10 +361,20 @@ def handle_notifications():
 
 
 @handle_errors
-def save_notification(sender_id: int, receiver_id: int, title: str, message: str, sent_at: datetime, is_delivered: bool, delivery_details: str) -> Tuple[bool, str]:
+def save_notification(
+    sender_id: int,
+    receiver_id: int,
+    title: str,
+    message: str,
+    sent_at: Optional[datetime] = None,
+    is_delivered: bool = False,
+    delivery_details: str = ""
+) -> Tuple[bool, str]:
     """
     ذخیره نوتیفیکیشن ارسال‌شده در دیتابیس با استفاده از Stored Procedure
     """
+    if sent_at is None:
+        sent_at = get_iran_time()
     logger.info(f"Attempting to save notification for receiver {receiver_id}")
     query = text("""
     DECLARE @ErrorCode INT, @ErrorMessage NVARCHAR(255);

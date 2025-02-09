@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from datetime import datetime
+# from datetime import datetime
 from user_models import db, ma
 import traceback
+from Iran_DateTime import get_iran_time
 
 # تعریف Blueprint برای تراکنش‌ها
 transactions_bp = Blueprint('transactions', __name__)
@@ -11,7 +12,7 @@ transactions_bp = Blueprint('transactions', __name__)
 class Transaction(db.Model):
     __tablename__ = 'Transactions'
     TransactionID = db.Column(db.Integer, primary_key=True)
-    TransactionDateTime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    TransactionDateTime = db.Column(db.DateTime, nullable=False, default=get_iran_time())
     UserID = db.Column(db.Integer, nullable=False)
     Quantity = db.Column(db.Float, nullable=False)
     Price = db.Column(db.Float, nullable=False)

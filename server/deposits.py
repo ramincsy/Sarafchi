@@ -5,8 +5,8 @@ import requests
 import base58
 import logging
 from threading import Lock
-from datetime import datetime
-
+# from datetime import datetime
+from Iran_DateTime import get_iran_time
 # تنظیمات اولیه
 # تغییر به DEBUG برای مشاهده تمامی لاگ‌ها
 logging.basicConfig(level=logging.DEBUG)
@@ -98,8 +98,8 @@ def process_deposits():
                                 "wallet_id": wallet_id,
                                 "amount": value,
                                 "tx_hash": transaction_hash,
-                                "deposit_time": datetime.now(),
-                                "created_at": datetime.now()
+                                "deposit_time": get_iran_time(),
+                                "created_at": get_iran_time()
                             }
                         )
 
@@ -113,7 +113,7 @@ def process_deposits():
                             {
                                 "amount": value,
                                 "wallet_id": wallet_id,
-                                "last_updated": datetime.now()
+                                "last_updated": get_iran_time()
                             }
                         )
                         logging.info(f"Updated balance for wallet {

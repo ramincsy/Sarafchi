@@ -3,7 +3,8 @@ import time
 import logging
 import base58
 from flask import Blueprint, jsonify
-from datetime import datetime
+# from datetime import datetime
+from Iran_DateTime import get_iran_time
 from user_models import db, WalletsUSDT
 
 logging.basicConfig(
@@ -91,7 +92,7 @@ def worker(wallet, contract):
             balance = get_balance_trc20(wallet.WalletAddress, contract)
             if balance is not None:
                 wallet.Balance = balance
-                wallet.LastUpdated = datetime.utcnow()
+                wallet.LastUpdated = get_iran_time()
                 logging.info(f"Updated wallet {
                              wallet.WalletAddress} with balance {balance} USDT")
             else:

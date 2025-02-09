@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta,timezone
+from Iran_DateTime import get_iran_time
 from user_models import db
 from sqlalchemy import text
 
@@ -13,6 +14,7 @@ class TokenManager:
 
     @staticmethod
     def create_tokens(user_id, user_info, device_id, ip_address, purpose="Default"):
+        current_time = get_iran_time()
         access_token = create_access_token(
             identity=user_info,
             expires_delta=TokenManager.ACCESS_TOKEN_EXPIRATION
@@ -22,8 +24,7 @@ class TokenManager:
             expires_delta=TokenManager.REFRESH_TOKEN_EXPIRATION
         )
 
-        expire_date = datetime.now(timezone.utc) + \
-            TokenManager.REFRESH_TOKEN_EXPIRATION
+        expire_date = current_time + TokenManager.REFRESH_TOKEN_EXPIRATION
         print(f"Calculated Refresh Token Expiry: {expire_date}")
         expire_date_str = expire_date.isoformat()
 
@@ -76,10 +77,10 @@ class TokenManager:
                 print(f"Token not found for device_id={
                     device_id} and refresh_token={refresh_token}")
                 raise ValueError("Invalid or expired refresh token.")
+            current_time = get_iran_time().astimezone(timezone.utc)
 
-            expire_date = token_in_db.ExpireDate.replace(
-                tzinfo=timezone.utc) if token_in_db.ExpireDate else None
-            if not expire_date or expire_date < datetime.now(timezone.utc):
+            expire_date = token_in_db.ExpireDate.replace(tzinfo=timezone.utc) if token_in_db.ExpireDate else None
+            if not expire_date or expire_date < current_time:
                 print(f"Token expired at {expire_date}")
                 raise ValueError("Refresh token has expired.")
 
@@ -120,11 +121,13 @@ def refresh():
             purpose="Refresh",
             ip_address=ip_address
         )
+        current_time_utc = get_iran_time().astimezone(timezone.utc)
+        access_token_expiry = (current_time_utc + TokenManager.ACCESS_TOKEN_EXPIRATION).isoformat()
 
         return jsonify({
             'message': 'Token refreshed successfully',
             'access_token': access_token,
-            'access_token_expiry': (datetime.now(timezone.utc) + TokenManager.ACCESS_TOKEN_EXPIRATION).isoformat(),
+            'access_token_expiry': access_token_expiry,
             'refresh_token': new_refresh_token,
             'refresh_token_expiry': refresh_token_expiry.isoformat(),
             'user_info': user_info,

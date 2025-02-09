@@ -3,12 +3,12 @@ from flask_jwt_extended import (  # type: ignore
     create_access_token, create_refresh_token, jwt_required,
     get_jwt_identity, set_access_cookies, set_refresh_cookies
 )
-from datetime import datetime, timedelta, timezone
+from datetime import  timezone
 from user_models import Users, JwtTokens, db, user_schema, users_schema
 from sqlalchemy import text  # type: ignore
 from sqlalchemy.sql import text  # type: ignore
 from token_utils import TokenManager
-
+from Iran_DateTime import get_iran_time
 user_bp = Blueprint('user_bp', __name__)
 
 
@@ -109,10 +109,9 @@ def login():
         except Exception as token_error:
             print(f"Error generating tokens: {str(token_error)}")
             return jsonify({'error': 'Failed to generate tokens'}), 500
-        access_token_expiry = datetime.now(
-            timezone.utc) + TokenManager.ACCESS_TOKEN_EXPIRATION
-        refresh_token_expiry = datetime.now(
-            timezone.utc) + TokenManager.REFRESH_TOKEN_EXPIRATION
+        current_time_utc = get_iran_time().astimezone(timezone.utc)
+        access_token_expiry = current_time_utc + TokenManager.ACCESS_TOKEN_EXPIRATION
+        refresh_token_expiry = current_time_utc + TokenManager.REFRESH_TOKEN_EXPIRATION
 
         response_data = {
             'message': 'Login successful',

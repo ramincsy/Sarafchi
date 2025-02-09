@@ -2,7 +2,8 @@ import requests
 import json
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from datetime import datetime
+# from datetime import datetime
+from Iran_DateTime import get_iran_time
 from user_models import db
 
 # تنظیمات
@@ -24,7 +25,7 @@ class InquiryResult(db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     status = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_iran_time())
 
 
 # ---------------------- توابع Jibit ----------------------
