@@ -83,7 +83,6 @@ const WithdrawPage = () => {
 
   // تابع ارسال درخواست برداشت
   const handleWithdraw = async () => {
-    console.log(PersianDateTime.now())
     const user_id = getUserID(userInfo)
     if (!user_id) {
       setError('خطا در دریافت شناسه کاربر. لطفاً دوباره وارد شوید.')

@@ -29,7 +29,7 @@ import PageManager from 'pages/PageManager'
 import RoleManagement from 'pages/RoleManagement'
 import PermissionManagement from 'pages/PermissionManagement'
 import UserRoleManagement from 'pages/UserRoleManagement'
-import ManualTokenRefreshTest from 'pages/ManualTokenRefreshTest'
+
 import TestRefreshTokenPage from 'pages/TestRefreshTokenPage'
 import UsersWalletsPage from 'pages/Blockchain/Tron/UsersWalletsPage'
 import Notifications from 'pages/Notifications'
@@ -48,11 +48,6 @@ export const publicRoutes = [
   {
     path: '/login',
     element: <LoginPage />,
-  },
-
-  {
-    path: '/ManualTokenRefreshTest',
-    element: <ManualTokenRefreshTest />,
   },
   {
     path: '/unauthorized',
