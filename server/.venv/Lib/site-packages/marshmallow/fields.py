@@ -166,9 +166,9 @@ class Field(FieldABC):
         data_key: str | None = None,
         attribute: str | None = None,
         validate: (
-            None
-            | typing.Callable[[typing.Any], typing.Any]
+            typing.Callable[[typing.Any], typing.Any]
             | typing.Iterable[typing.Callable[[typing.Any], typing.Any]]
+            | None
         ) = None,
         required: bool = False,
         allow_none: bool | None = None,
@@ -321,8 +321,9 @@ class Field(FieldABC):
         self,
         attr: str,
         obj: typing.Any,
-        accessor: typing.Callable[[typing.Any, str, typing.Any], typing.Any]
-        | None = None,
+        accessor: (
+            typing.Callable[[typing.Any, str, typing.Any], typing.Any] | None
+        ) = None,
         **kwargs,
     ):
         """Pulls the value for the given key from the object, applies the
@@ -538,11 +539,15 @@ class Nested(Field):
 
     def __init__(
         self,
-        nested: SchemaABC
-        | SchemaMeta
-        | str
-        | dict[str, Field | type[Field]]
-        | typing.Callable[[], SchemaABC | SchemaMeta | dict[str, Field | type[Field]]],
+        nested: (
+            SchemaABC
+            | SchemaMeta
+            | str
+            | dict[str, Field | type[Field]]
+            | typing.Callable[
+                [], SchemaABC | SchemaMeta | dict[str, Field | type[Field]]
+            ]
+        ),
         *,
         dump_default: typing.Any = missing_,
         default: typing.Any = missing_,
@@ -2024,14 +2029,14 @@ class Function(Field):
     def __init__(
         self,
         serialize: (
-            None
-            | typing.Callable[[typing.Any], typing.Any]
+            typing.Callable[[typing.Any], typing.Any]
             | typing.Callable[[typing.Any, dict], typing.Any]
+            | None
         ) = None,
         deserialize: (
-            None
-            | typing.Callable[[typing.Any], typing.Any]
+            typing.Callable[[typing.Any], typing.Any]
             | typing.Callable[[typing.Any, dict], typing.Any]
+            | None
         ) = None,
         **kwargs,
     ):

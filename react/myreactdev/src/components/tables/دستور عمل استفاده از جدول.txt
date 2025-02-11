@@ -1,0 +1,60 @@
+دستور عمل کلی استفاده از AdvancedTable
+وارد کردن کامپوننت:
+
+در فایل مورد نظر خود، کامپوننت AdvancedTable را به این شکل وارد کنید:
+jsx
+Copy
+import AdvancedTable from "components/tables/AdvancedTable";
+تعریف ستون‌ها:
+
+یک آرایه از اشیاء تعریف کنید که هر شیء دارای کلیدهای field و label باشد. به عنوان مثال:
+jsx
+Copy
+const columns = [
+  { field: "WithdrawalID", label: "شناسه" },
+  { field: "UserID", label: "کاربر" },
+  { field: "Amount", label: "مقدار" },
+  // ...
+];
+تعریف تابع واکشی داده‌ها:
+
+یک تابع async تعریف کنید که داده‌ها را از سرور (یا هر منبع دیگری) واکشی کند و یک آرایه از داده‌ها را برگرداند.
+jsx
+Copy
+const fetchData = async () => {
+  // فراخوانی API یا هر منبع داده‌ای
+  const response = await MyService.getData();
+  return response.data;
+};
+اختیاری – تعریف عملکرد‌های عملیات (actions):
+
+اگر نیاز به دکمه‌های عملیات (مانند تأیید یا رد) دارید، می‌توانید یک تابع یا کامپوننت برای هر ردیف تعریف کنید و آن را به عنوان prop actions ارسال کنید.
+jsx
+Copy
+const actions = (row) => (
+  <>
+    <Button onClick={() => approve(row)}>تأیید</Button>
+    <Button onClick={() => reject(row)}>رد</Button>
+  </>
+);
+استفاده از AdvancedTable:
+
+کامپوننت را به همراه prop‌های columns، fetchData، actions (در صورت نیاز) و defaultPageSize (اختیاری) فراخوانی کنید:
+jsx
+Copy
+<AdvancedTable
+  columns={columns}
+  fetchData={fetchData}
+  actions={actions}  // اختیاری
+  defaultPageSize={10} // اختیاری
+/>
+ویژگی‌های AdvancedTable:
+
+فیلتر جستجو: امکان جستجو در تمامی فیلدهای داده فراهم شده است.
+فیلتر ستون‌ها: می‌توانید تعیین کنید کدام ستون‌ها در جدول نمایش داده شوند.
+فیلتر وضعیت: با انتخاب وضعیت (Pending, Approved, Rejected) می‌توانید داده‌ها را فیلتر کنید.
+دانلود اکسل: امکان دانلود داده‌های نمایش داده شده به صورت فایل اکسل وجود دارد.
+نمایش Responsive:
+در دسکتاپ جدول با قابلیت Drag & Drop و Resizable نمایش داده می‌شود.
+در موبایل، جدول به صورت کارت‌های خوانا نمایش داده می‌شود و فیلترها به صورت عمودی (با وضعیت زیر فیلتر ستون‌ها) قرار دارند.
+با پیروی از این دستور عمل می‌توانید از کامپوننت AdvancedTable در پروژه‌های مختلف خود استفاده کرده و تمامی قابلیت‌های آن را بهره‌مند شوید.

@@ -1,33 +1,23 @@
-import React, { useState, useEffect, useMemo, useContext } from "react";
-import "./AutomaticTransaction.css";
+import React, { useState, useEffect, useContext } from "react";
 import {
-  useTable,
-  useFilters,
-  useGlobalFilter,
-  useAsyncDebounce,
-} from "react-table";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-
-import AuthContext from "../../contexts/AuthContext";
-
-const GlobalFilter = ({ globalFilter, setGlobalFilter }) => {
-  const [value, setValue] = useState(globalFilter);
-  const onChange = useAsyncDebounce((value) => {
-    setGlobalFilter(value || undefined);
-  }, 300);
-
-  return (
-    <input
-      value={value || ""}
-      onChange={(e) => {
-        setValue(e.target.value);
-        onChange(e.target.value);
-      }}
-      placeholder="جستجو..."
-      className="search-input"
-    />
-  );
-};
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Paper,
+  Grid,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  useTheme,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AuthContext from "contexts/AuthContext";
+import ApiManager from "services/ApiManager";
+import AdvancedTable from "components/tables/AdvancedTable";
 
 const AutomaticTransaction = () => {
   const [price, setPrice] = useState(null);
@@ -35,257 +25,196 @@ const AutomaticTransaction = () => {
   const [total, setTotal] = useState(null);
   const [currency, setCurrency] = useState("USD");
   const [transactionType, setTransactionType] = useState("buy");
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isTableOpen, setTableOpen] = useState(false);
+  // برای رفرش مجدد جدول بعد از عملیات تایید/رد
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const theme = useTheme();
   const { userInfo } = useContext(AuthContext);
+  const getCurrentUserID = userInfo?.UserID;
 
-  const getCurrentUserID = () => {
-    if (userInfo && userInfo.user_id) {
-      return userInfo.user_id;
-    }
-    const storedUserInfo = JSON.parse(localStorage.getItem("user_info"));
-    return storedUserInfo && storedUserInfo.user_id
-      ? storedUserInfo.user_id
-      : null;
-  };
-
-  const currentUserID = getCurrentUserID();
-  const createdBy = currentUserID || "System";
-  console.log(createdBy);
-
+  // واکشی قیمت از API بر اساس ارز انتخابی
   useEffect(() => {
     const fetchPrice = async () => {
-      setLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/live-price?currency=${currency}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch price.");
-        const data = await response.json();
-        if (data.success) {
-          setPrice(data.price);
-        } else {
-          throw new Error("Price not available");
-        }
+        const data = await ApiManager.TransactionsService.fetchPrice(currency);
+        setPrice(data.price);
       } catch (error) {
-        console.error("Error fetching price:", error);
         setPrice(null);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchPrice();
   }, [currency]);
 
-  const fetchTransactions = async () => {
+  // تابع واکشی داده برای AdvancedTable
+  const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/transactions");
-      if (!response.ok) throw new Error("Failed to fetch transactions.");
-      const data = await response.json();
-      setTransactions(
-        data.map((transaction) => ({
-          id: transaction.TransactionID,
-          date: new Date(transaction.TransactionDateTime).toLocaleString(
-            "fa-IR"
-          ),
-          type: transaction.TransactionType,
-          currency: transaction.CurrencyType,
-          price: transaction.Price,
-          quantity: transaction.Quantity,
-          total: transaction.Quantity * transaction.Price,
-        }))
-      );
+      const data = await ApiManager.TransactionsService.fetchTransactions();
+      return data.map((transaction, index) => ({
+        WithdrawalID: transaction.TransactionID || index,
+        UserID: transaction.UserID,
+        Amount: transaction.Quantity,
+        Currency: transaction.CurrencyType,
+        Price: transaction.Price,
+        Total: transaction.Quantity * transaction.Price,
+        Date: new Date(transaction.TransactionDateTime).toLocaleString("fa-IR"),
+        Status: transaction.Status || "Unknown",
+      }));
     } catch (error) {
       console.error("Error fetching transactions:", error);
+      return [];
     }
   };
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
+  // ستون‌های جدول AdvancedTable
+  const columns = [
+    { field: "WithdrawalID", label: "شناسه" },
+    { field: "UserID", label: "کاربر" },
+    { field: "Amount", label: "مقدار" },
+    { field: "Currency", label: "ارز" },
+    { field: "Price", label: "قیمت" },
+    { field: "Total", label: "مجموع" },
+    { field: "Date", label: "تاریخ" },
+    { field: "Status", label: "وضعیت" },
+  ];
 
+  // کنترل تغییر تعداد و محاسبه مجموع بر اساس قیمت
   const handleQuantityChange = (e) => {
     const value = e.target.value;
     setQuantity(value);
-    if (price && value) {
-      setTotal(value * price);
-    } else {
-      setTotal(null);
-    }
+    setTotal(price && value ? value * price : null);
   };
 
+  // ثبت معامله جدید
   const handleSubmit = async (e) => {
     e.preventDefault();
     const transactionData = {
-      UserID: currentUserID || 1, // از user_id کاربر استفاده کنید، در صورت نبود مقدار 1
+      UserID: userInfo?.user_id || 1,
       Quantity: parseFloat(quantity),
       Price: parseFloat(price),
-      TransactionType: "معامله اتوماتیک",
+      TransactionType: "Automatic",
       Position: transactionType === "buy" ? "Buy" : "Sell",
       CurrencyType: currency,
-      CreatedBy: createdBy,
+      CreatedBy: getCurrentUserID,
     };
 
-    console.log("Sending transaction data:", transactionData);
-
     try {
-      const response = await fetch("http://localhost:5000/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(transactionData),
-      });
-
-      if (!response.ok) throw new Error("Failed to save transaction.");
+      await ApiManager.TransactionsService.createTransaction(transactionData);
       alert("تراکنش با موفقیت ثبت شد");
       setQuantity("");
       setTotal(null);
-      fetchTransactions();
+      // در صورت نیاز رفرش جدول
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error("Error saving transaction:", error);
       alert("خطا در ثبت تراکنش");
     }
   };
 
-  const columns = useMemo(
-    () => [
-      { Header: "شناسه", accessor: "id" },
-      { Header: "تاریخ", accessor: "date" },
-      { Header: "نوع معامله", accessor: "type" },
-      { Header: "ارز", accessor: "currency" },
-      { Header: "قیمت", accessor: "price" },
-      { Header: "تعداد", accessor: "quantity" },
-      { Header: "مجموع", accessor: "total" },
-    ],
-    []
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    state,
-    setGlobalFilter,
-  } = useTable({ columns, data: transactions }, useFilters, useGlobalFilter);
-
   return (
-    <div className="transaction-container">
-      <h2 className="form-title">معامله اتوماتیک</h2>
-      <form onSubmit={handleSubmit} className="transaction-form">
-        <div className="form-group">
-          <label>نوع معامله:</label>
-          <select
-            value={transactionType}
-            onChange={(e) => setTransactionType(e.target.value)}
-            className="form-control"
-          >
-            <option value="buy">خرید</option>
-            <option value="sell">فروش</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>نوع ارز:</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="form-control"
-          >
-            <option value="USD">دلار</option>
-            <option value="USDT">تتر</option>
-            <option value="CNY">یوان</option>
-            <option value="TRY">لیر</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>تعداد:</label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={handleQuantityChange}
-            min="1"
-            className="form-control"
-            disabled={loading || !price}
-          />
-        </div>
-        <div className="form-group">
-          <label>قیمت (از API):</label>
-          <input
-            type="text"
-            value={
-              loading ? "در حال بارگذاری..." : price || "خطا در دریافت قیمت"
-            }
-            readOnly
-            className="form-control"
-          />
-        </div>
-        <div className="form-group">
-          <label>مجموع:</label>
-          <input
-            type="text"
-            value={loading || total === null ? "در حال محاسبه..." : total}
-            readOnly
-            className="form-control"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !price || !quantity}
-          className="submit-btn"
+    <Grid container spacing={3} padding={3}>
+      {/* فرم ثبت معامله */}
+      <Grid item xs={12} md={4}>
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 3,
+            backgroundColor: theme.palette.background.paper,
+            height: "100%",
+          }}
         >
-          ثبت معامله
-        </button>
-      </form>
+          <Typography
+            variant="h5"
+            gutterBottom
+            color={theme.palette.text.primary}
+          >
+            ثبت معامله جدید
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>نوع معامله</InputLabel>
+              <Select
+                value={transactionType}
+                onChange={(e) => setTransactionType(e.target.value)}
+              >
+                <MenuItem value="buy">خرید</MenuItem>
+                <MenuItem value="sell">فروش</MenuItem>
+              </Select>
+            </FormControl>
 
-      <div className="transaction-history">
-        <h3
-          onClick={() => setTableOpen(!isTableOpen)}
-          className="history-title"
-        >
-          تاریخچه معاملات
-          <span className="table-toggle-icon">
-            {isTableOpen ? <FaChevronUp /> : <FaChevronDown />}
-          </span>
-        </h3>
-        {isTableOpen && (
-          <div>
-            <GlobalFilter
-              globalFilter={state.globalFilter}
-              setGlobalFilter={setGlobalFilter}
+            <FormControl fullWidth margin="normal">
+              <InputLabel>نوع ارز</InputLabel>
+              <Select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <MenuItem value="USD">دلار</MenuItem>
+                <MenuItem value="USDT">تتر</MenuItem>
+                <MenuItem value="CNY">یوان</MenuItem>
+                <MenuItem value="TRY">لیر</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="تعداد"
+              type="number"
+              fullWidth
+              margin="normal"
+              value={quantity}
+              onChange={handleQuantityChange}
+              disabled={!price}
             />
-            <table {...getTableProps()} className="transaction-table">
-              <thead>
-                {headerGroups.map((headerGroup) => (
-                  <tr {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column) => (
-                      <th {...column.getHeaderProps()}>
-                        {column.render("Header")}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {rows.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()}>
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+
+            <TextField
+              label="قیمت (از API)"
+              fullWidth
+              margin="normal"
+              value={price || "در حال بارگذاری..."}
+              InputProps={{ readOnly: true }}
+            />
+
+            <TextField
+              label="مجموع"
+              fullWidth
+              margin="normal"
+              value={total || "در حال محاسبه..."}
+              InputProps={{ readOnly: true }}
+            />
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              ثبت معامله
+            </Button>
+          </form>
+        </Paper>
+      </Grid>
+
+      {/* جدول سمت راست */}
+      <Grid item xs={12} md={8}>
+        <Accordion defaultExpanded sx={{ height: "auto" }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">تاریخچه معاملات</Typography>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{
+              // برای امکان اسکرول در صفحات موبایل
+              overflowY: "auto",
+              maxHeight: "70vh", // مقدار دلخواه
+            }}
+          >
+            <AdvancedTable
+              key={refreshKey}
+              columns={columns}
+              fetchData={fetchData}
+              defaultPageSize={10}
+            />
+          </AccordionDetails>
+        </Accordion>
+      </Grid>
+    </Grid>
   );
 };
 
