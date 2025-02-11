@@ -116,7 +116,7 @@ const SubHeader = () => {
             {title}
           </Typography>
           <Typography
-            variant='body2'
+            variant='body1'
             sx={{ color: theme.palette.common.white, fontWeight: 'bold' }}
           >
             {formatNumber(value)} {suffix}
@@ -132,21 +132,21 @@ const SubHeader = () => {
       value: balances.USDT,
       suffix: 'USDT',
       icon: <AccountBalanceWallet sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #0f4c75, #3282b8)',
+      gradient: 'linear-gradient(135deg, #373b44, #4286f4)',
     },
     {
       title: 'قیمت دلار',
       value: usdPrice,
       suffix: 'تومان',
       icon: <AttachMoney sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #67d60f, #24f2a7)',
+      gradient: 'linear-gradient(135deg,#5a3f37, #2c7744)',
     },
     {
       title: 'موجودی ریالی',
       value: balances.IRR,
       suffix: 'IRR',
       icon: <Money sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #1565C0, #42A5F5)',
+      gradient: 'linear-gradient(135deg, #373b44, #4286f4)',
     },
   ]
 
@@ -158,7 +158,7 @@ const SubHeader = () => {
         minHeight: isMobile ? 70 : 90,
         borderBottom: `1px solid ${theme.palette.divider}`,
         background:
-          'linear-gradient(50deg, rgba(238, 242, 243, 0.8), rgba(203, 208, 232, 0.8))',
+          'linear-gradient(50deg, rgba(238, 242, 243, 0.8), rgba(238, 242, 243, 0.8))',
         backdropFilter: 'blur(10px)', // ایجاد افکت شیشهای
         display: 'flex',
         alignItems: 'center',
