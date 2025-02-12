@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { useTheme } from '@mui/material/styles'
 import {
@@ -8,47 +8,36 @@ import {
   CircularProgress,
   Box,
 } from '@mui/material'
-import ApiManager from 'services/ApiManager'
+import useUSDTPrice from 'hooks/useUSDTPrice' // فراخوانی هوک
 
 const PriceBox = ({
-  refreshInterval = 100000,
+  refreshInterval = 10000, // تغییر به 10 ثانیه
   showBuyPrice = true,
   showSellPrice = true,
   splitBoxes = true,
 }) => {
   const theme = useTheme()
-  const [loadingPrice, setLoadingPrice] = useState(true)
-  const [priceError, setPriceError] = useState(null)
-  const [livePrice, setLivePrice] = useState(null)
-  const [buyPrice, setBuyPrice] = useState(null)
 
-  const fetchPrice = async () => {
-    setLoadingPrice(true)
-    try {
-      const data = await ApiManager.PriceService.fetchPrice()
-      if (data.success) {
-        const sellPrice = data.price
-        const calculatedBuyPrice = sellPrice - 950
-        setLivePrice(sellPrice)
-        setBuyPrice(calculatedBuyPrice)
-        setPriceError(null)
-      } else {
-        setPriceError('خطا در دریافت قیمت')
-      }
-    } catch (error) {
-      setPriceError('خطای شبکه یا سرور')
-    } finally {
-      setLoadingPrice(false)
-    }
-  }
+  // استفاده از هوک برای دریافت قیمت خرید و فروش
+  const {
+    price: buyPrice,
+    loading: buyLoading,
+    error: buyError,
+  } = useUSDTPrice('buy')
+  const {
+    price: sellPrice,
+    loading: sellLoading,
+    error: sellError,
+  } = useUSDTPrice('sell')
 
-  useEffect(() => {
-    fetchPrice()
-    const interval = setInterval(fetchPrice, refreshInterval)
-    return () => clearInterval(interval)
-  }, [refreshInterval])
+  // مدیریت خطاهای کلی
+  const hasError = buyError || sellError
 
-  const renderCard = (title, value, color, bgColor) => (
+  // نمایش لوادینگ اگر هر دو قیمت در حال بارگذاری باشند
+  const isLoading = buyLoading || sellLoading
+
+  // رندر کارت‌ها
+  const renderCard = (title, value, color) => (
     <Card
       sx={{
         flex: 1,
@@ -78,7 +67,8 @@ const PriceBox = ({
     </Card>
   )
 
-  if (loadingPrice) {
+  // نمایش لوادینگ
+  if (isLoading) {
     return (
       <Box
         display='flex'
@@ -91,7 +81,8 @@ const PriceBox = ({
     )
   }
 
-  if (priceError) {
+  // نمایش خطا
+  if (hasError) {
     return (
       <Card
         sx={{
@@ -102,28 +93,19 @@ const PriceBox = ({
         }}
       >
         <Typography color='error' variant='h6'>
-          {priceError}
+          {buyError || sellError || 'خطا در دریافت قیمت'}
         </Typography>
       </Card>
     )
   }
 
+  // نمایش کارت‌ها
   return (
     <Box display={splitBoxes ? 'flex' : 'block'} gap={2}>
       {showSellPrice &&
-        renderCard(
-          'قیمت فروش',
-          livePrice,
-          theme.palette.error.main,
-          theme.palette.background.default,
-        )}
+        renderCard('قیمت فروش', sellPrice, theme.palette.error.main)}
       {showBuyPrice &&
-        renderCard(
-          'قیمت خرید',
-          buyPrice,
-          theme.palette.success.main,
-          theme.palette.background.default,
-        )}
+        renderCard('قیمت خرید', buyPrice, theme.palette.success.main)}
     </Box>
   )
 }

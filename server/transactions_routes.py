@@ -35,6 +35,7 @@ transactions_schema = TransactionSchema(many=True)
 @transactions_bp.route('/transactions', methods=['POST'])
 def create_transaction():
     data = request.json
+    transaction_datetime = get_iran_time()
    
     try:
         with db.session.begin():
@@ -47,7 +48,8 @@ def create_transaction():
                     @Position=:Position, 
                     @CurrencyType=:CurrencyType, 
                     @Description=:Description, 
-                    @CreatedBy=:CreatedBy
+                    @CreatedBy=:CreatedBy,
+                    @TransactionDateTime=:TransactionDateTime
             """), {
                 "UserID": data['UserID'],
                 "Quantity": data['Quantity'],
@@ -56,7 +58,8 @@ def create_transaction():
                 "Position": data['Position'],
                 "CurrencyType": data['CurrencyType'],
                 "Description": data.get('Description', None),
-                "CreatedBy": data['CreatedBy']
+                "CreatedBy": data['CreatedBy'],
+                "TransactionDateTime": transaction_datetime
             })
 
             rows = result.fetchall()

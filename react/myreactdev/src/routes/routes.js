@@ -14,6 +14,7 @@ import AutomaticTransaction from 'pages/Transactions/AutomaticTransaction'
 import SuggestedTransaction from 'pages/Transactions/SuggestedTransaction'
 import LiveTransaction from 'pages/Transactions/LiveTransaction'
 import AllTransactionsPage from 'pages/Transactions/AllTransactionsPage'
+import Transaction from 'pages/Transactions/Transaction'
 
 // Financial related pages
 import BalancesPage from 'pages/Balances/BalancesPage'
@@ -288,6 +289,14 @@ export const protectedRoutes = [
     element: (
       <ProtectedRoute>
         <UserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/Transaction',
+    element: (
+      <ProtectedRoute>
+        <Transaction />
       </ProtectedRoute>
     ),
   },

@@ -13,24 +13,29 @@ import {
 import AuthContext from 'contexts/AuthContext'
 import ApiManager from 'services/ApiManager'
 import { AccountBalanceWallet, AttachMoney, Money } from '@mui/icons-material'
-import PriceService from 'services/PriceService'
+import useUSDTPrice from 'hooks/useUSDTPrice' // فراخوانی هوک
 
 const SubHeader = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-
   const { userInfo } = useContext(AuthContext)
   const userID = userInfo?.UserID
 
+  // استفاده از هوک برای دریافت قیمت دلار
+  const {
+    price: usdPrice,
+    loading: priceLoading,
+    error: priceError,
+  } = useUSDTPrice('sell')
+
+  // مدیریت موجودی‌ها
   const [balances, setBalances] = useState({ USDT: 0, IRR: 0 })
-  const [usdPrice, setUsdPrice] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     if (userID) {
       fetchBalances(userID)
-      fetchUsdPrice()
     } else {
       setError('شناسه کاربر یافت نشد.')
       setIsLoading(false)
@@ -54,16 +59,6 @@ const SubHeader = () => {
       setError('ارتباط با سرور با مشکل مواجه شد.')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const fetchUsdPrice = async () => {
-    try {
-      const data = await PriceService.fetchPrice()
-      setUsdPrice(data.price) // فرض بر این است که مقدار قیمت دلار در data.price ذخیره شده است
-    } catch (err) {
-      console.error('خطا در دریافت قیمت دلار:', err)
-      setError('خطا در دریافت قیمت دلار.')
     }
   }
 
@@ -150,6 +145,12 @@ const SubHeader = () => {
     },
   ]
 
+  // مدیریت خطاهای کلی
+  const hasError = error || priceError
+
+  // نمایش لوادینگ اگر هر دو بخش در حال بارگذاری باشند
+  const isLoadingOverall = isLoading || priceLoading
+
   return (
     <Paper
       elevation={0}
@@ -170,13 +171,13 @@ const SubHeader = () => {
         borderRadius: '8px', // گرد کردن گوشه‌ها
       }}
     >
-      {isLoading ? (
+      {isLoadingOverall ? (
         <Box sx={{ margin: 'auto' }}>
           <CircularProgress size={24} sx={{ color: 'white' }} />
         </Box>
-      ) : error ? (
+      ) : hasError ? (
         <Typography color='error' sx={{ margin: 'auto' }}>
-          {error}
+          {error || priceError || 'خطا در بارگذاری اطلاعات'}
         </Typography>
       ) : (
         <Box

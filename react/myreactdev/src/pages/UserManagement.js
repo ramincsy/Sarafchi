@@ -19,25 +19,6 @@ import {
 import UserService from 'services/UserService'
 
 // داده‌های نمونه کاربران
-const sampleUsers = [
-  {
-    id: 1,
-    name: 'کاربر ۱',
-    email: 'user1@example.com',
-    isBlocked: false,
-    dollarRate: 42000,
-    tradeLimitCount: 10,
-    tradeLimitAmount: 1000000,
-    rialWithdrawLimitCount: 5,
-    rialWithdrawLimitAmount: 500000,
-    tetherWithdrawLimitCount: 5,
-    tetherWithdrawLimitAmount: 500,
-    loan: 0,
-    rialBalance: 1000000,
-    tetherBalance: 100,
-  },
-  // کاربران دیگر...
-]
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
