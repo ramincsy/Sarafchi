@@ -29,7 +29,7 @@ const SubHeader = () => {
   } = useUSDTPrice('sell')
 
   // مدیریت موجودی‌ها
-  const [balances, setBalances] = useState({ USDT: 0, IRR: 0 })
+  const [balances, setBalances] = useState({ USDT: 0, TMN: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -49,7 +49,7 @@ const SubHeader = () => {
       if (data.success && Array.isArray(data.balances)) {
         setBalances({
           USDT: getNetBalance(data.balances, 'USDT'),
-          IRR: getNetBalance(data.balances, 'IRR'),
+          TMN: getNetBalance(data.balances, 'TMN'),
         })
       } else {
         setError('خطا در دریافت موجودی‌ها.')
@@ -138,8 +138,8 @@ const SubHeader = () => {
     },
     {
       title: 'موجودی ریالی',
-      value: balances.IRR,
-      suffix: 'IRR',
+      value: balances.TMN,
+      suffix: 'TMN',
       icon: <Money sx={{ color: 'white' }} />,
       gradient: 'linear-gradient(135deg, #373b44, #4286f4)',
     },

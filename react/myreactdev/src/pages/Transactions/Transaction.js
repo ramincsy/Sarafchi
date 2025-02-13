@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  useCallback,
+} from 'react'
 import {
   Accordion,
   AccordionSummary,
@@ -15,39 +21,126 @@ import {
   useTheme,
   ToggleButton,
   ToggleButtonGroup,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Box,
+  CircularProgress,
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AuthContext from 'contexts/AuthContext'
 import ApiManager from 'services/ApiManager'
 import AdvancedTable from 'components/tables/AdvancedTable'
 import LeverSlider from 'components/common/LeverSlider' // مسیر صحیح فایل LeverSlider
-import useUSDTPrice from 'hooks/useUSDTPrice' // فراخوانی هوک
+import PriceService from 'services/PriceService'
+
+/* ConfirmDialog: دیالوگ تأیید نهایی معامله با تایمر دایره‌ای سبز رنگ */
+const ConfirmDialog = ({
+  open,
+  onClose,
+  confirmPrice,
+  countdown,
+  totalTime = 10,
+  onConfirm,
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: { padding: 2, borderRadius: 2 },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+        تأیید نهایی معامله
+      </DialogTitle>
+      <DialogContent sx={{ textAlign: 'center' }}>
+        <DialogContentText>قیمت جدید: {confirmPrice}</DialogContentText>
+        <Box display='flex' flexDirection='column' alignItems='center' mt={2}>
+          <Box position='relative' display='inline-flex'>
+            <CircularProgress
+              variant='determinate'
+              value={(countdown / totalTime) * 100}
+              size={80}
+              sx={{ color: 'green' }}
+            />
+            <Box
+              position='absolute'
+              top={0}
+              left={0}
+              bottom={0}
+              right={0}
+              display='flex'
+              alignItems='center'
+              justifyContent='center'
+            >
+              <Typography variant='h6' component='div' color='text.primary'>
+                {countdown}
+              </Typography>
+            </Box>
+          </Box>
+          <Typography variant='body2' sx={{ mt: 1 }}>
+            لطفاً در عرض {totalTime} ثانیه تأیید کنید.
+          </Typography>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center' }}>
+        <Button onClick={onClose} color='error' variant='outlined'>
+          لغو
+        </Button>
+        <Button
+          onClick={onConfirm}
+          color='success'
+          variant='contained'
+          autoFocus
+        >
+          تأیید
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 const Transaction = () => {
-  // حالت معامله: automatic, suggested, live
   const [mode, setMode] = useState('automatic')
   const [quantity, setQuantity] = useState('')
   const [total, setTotal] = useState(null)
   const [currency, setCurrency] = useState('USDT')
   const [transactionType, setTransactionType] = useState('sell')
   const [refreshKey, setRefreshKey] = useState(0)
-  const [usdtBalance, setUsdtBalance] = useState(0) // موجودی USDT کاربر
-  const [quantityError, setQuantityError] = useState('') // خطای مربوط به تعداد
-  // state برای قیمت دستی در حالت‌های live و suggested
+  const [usdtBalance, setUsdtBalance] = useState(0)
+  const [quantityError, setQuantityError] = useState('')
   const [manualPrice, setManualPrice] = useState('')
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [confirmPrice, setConfirmPrice] = useState(null)
+  const [countdown, setCountdown] = useState(10)
 
   const theme = useTheme()
   const { userInfo } = useContext(AuthContext)
   const userId = userInfo?.UserID || 1
 
-  // دریافت قیمت از API (فقط برای حالت automatic)
-  const {
-    price,
-    loading: priceLoading,
-    error: priceError,
-  } = useUSDTPrice('sell')
+  // دریافت قیمت دلار از سرویس (Polling: هر 10 ثانیه)
+  const [price, setPrice] = useState(null)
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const response = await PriceService.fetchUSDTPrice('sell')
+        if (response !== null && typeof response === 'number') {
+          setPrice(response)
+        } else {
+          throw new Error('داده دریافتی از سرور نامعتبر است.')
+        }
+      } catch (err) {
+        console.error('خطا در دریافت قیمت:', err.message)
+      }
+    }
+    fetchPrice()
+    const interval = setInterval(fetchPrice, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
-  // واکشی موجودی USDT کاربر
   useEffect(() => {
     const fetchBalances = async () => {
       try {
@@ -65,11 +158,10 @@ const Transaction = () => {
     fetchBalances()
   }, [userId])
 
-  // تعیین قیمت مؤثر بر اساس حالت:
-  // در حالت automatic از قیمت دریافتی (price) و در حالت‌های live/suggested از قیمت دستی (manualPrice) استفاده می‌شود
-  const effectivePrice = mode === 'automatic' ? price : manualPrice || price
+  const effectivePrice = useMemo(() => {
+    return mode === 'automatic' ? price : manualPrice || price
+  }, [mode, price, manualPrice])
 
-  // به‌روزرسانی مجموع (total) بر اساس تعداد و قیمت مؤثر
   useEffect(() => {
     if (
       effectivePrice !== null &&
@@ -83,39 +175,41 @@ const Transaction = () => {
     }
   }, [effectivePrice, quantity])
 
-  // تغییر دستی تعداد (ورودی کاربر)
-  const handleQuantityChange = e => {
-    const value = e.target.value
-    if (!isNaN(value)) {
-      const parsedValue = parseFloat(value)
-      if (parsedValue > usdtBalance) {
+  const handleQuantityChange = useCallback(
+    e => {
+      const value = e.target.value
+      if (!isNaN(value)) {
+        const parsedValue = parseFloat(value)
+        if (parsedValue > usdtBalance) {
+          setQuantityError('مقدار وارد شده بیشتر از موجودی USDT شما است.')
+        } else {
+          setQuantityError('')
+          setQuantity(parsedValue)
+        }
+      } else {
+        setQuantityError('لطفاً یک عدد معتبر وارد کنید.')
+      }
+    },
+    [usdtBalance],
+  )
+
+  const handleSliderQuantityChange = useCallback(
+    calculatedQuantity => {
+      let newQuantity = calculatedQuantity
+      if (mode === 'live' || mode === 'suggested') {
+        newQuantity = Math.floor(calculatedQuantity)
+      }
+      if (newQuantity > usdtBalance) {
         setQuantityError('مقدار وارد شده بیشتر از موجودی USDT شما است.')
       } else {
         setQuantityError('')
-        setQuantity(parsedValue)
+        setQuantity(newQuantity)
       }
-    } else {
-      setQuantityError('لطفاً یک عدد معتبر وارد کنید.')
-    }
-  }
+    },
+    [mode, usdtBalance],
+  )
 
-  // دریافت مقدار محاسبه‌شده توسط LeverSlider
-  const handleSliderQuantityChange = calculatedQuantity => {
-    // در حالت live و suggested مقدار به عدد صحیح گرد می‌شود
-    let newQuantity = calculatedQuantity
-    if (mode === 'live' || mode === 'suggested') {
-      newQuantity = Math.floor(calculatedQuantity)
-    }
-    if (newQuantity > usdtBalance) {
-      setQuantityError('مقدار وارد شده بیشتر از موجودی USDT شما است.')
-    } else {
-      setQuantityError('')
-      setQuantity(newQuantity)
-    }
-  }
-
-  // واکشی داده‌ها برای نمایش تاریخچه تراکنش‌ها
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const data = await ApiManager.TransactionsService.fetchTransactions()
       return data.map((transaction, index) => ({
@@ -132,36 +226,26 @@ const Transaction = () => {
       console.error('خطا در دریافت تراکنش‌ها:', error)
       return []
     }
-  }
+  }, [])
 
-  // ستون‌های جدول
-  const columns = [
-    { field: 'WithdrawalID', label: 'شناسه' },
-    { field: 'UserID', label: 'کاربر' },
-    { field: 'Amount', label: 'مقدار' },
-    { field: 'Currency', label: 'ارز' },
-    { field: 'Price', label: 'قیمت' },
-    { field: 'Total', label: 'مجموع' },
-    { field: 'Date', label: 'تاریخ' },
-    { field: 'Status', label: 'وضعیت' },
-  ]
+  const columns = useMemo(
+    () => [
+      { field: 'WithdrawalID', label: 'شناسه' },
+      { field: 'UserID', label: 'کاربر' },
+      { field: 'Amount', label: 'مقدار' },
+      { field: 'Currency', label: 'ارز' },
+      { field: 'Price', label: 'قیمت' },
+      { field: 'Total', label: 'مجموع' },
+      { field: 'Date', label: 'تاریخ' },
+      { field: 'Status', label: 'وضعیت' },
+    ],
+    [],
+  )
 
-  // ثبت تراکنش جدید
-  const handleSubmit = async e => {
-    e.preventDefault()
-    if (quantityError) {
-      alert(quantityError)
-      return
-    }
-    // در حالت‌های live و suggested باید قیمت وارد شده معتبر باشد
-    if (
-      (mode === 'live' || mode === 'suggested') &&
-      (!manualPrice || isNaN(manualPrice))
-    ) {
-      alert('لطفاً یک قیمت معتبر وارد کنید.')
-      return
-    }
+  // تعریف آستانه برای مقایسه قیمت (به عنوان مثال 0.01) اگر قیمت بالارفت کاری نداشته باشم  اگر قیمت پایین امد  در لحظه  نوتفیکیشن
+  const priceThreshold = 0.01
 
+  const finalizeTransaction = useCallback(async () => {
     let txType = ''
     if (mode === 'automatic') {
       txType = 'Automatic'
@@ -174,7 +258,7 @@ const Transaction = () => {
     const transactionData = {
       UserID: userInfo?.user_id || 1,
       Quantity: parseFloat(quantity),
-      Price: parseFloat(effectivePrice),
+      Price: parseFloat(confirmPrice || effectivePrice),
       TransactionType: txType,
       Position: transactionType === 'buy' ? 'Buy' : 'Sell',
       CurrencyType: currency,
@@ -188,26 +272,96 @@ const Transaction = () => {
       setTotal(null)
       if (mode !== 'automatic') setManualPrice('')
       setRefreshKey(prev => prev + 1)
+      // بستن دیالوگ تأیید پس از ثبت موفق
+      setConfirmDialogOpen(false)
     } catch (error) {
       alert('خطا در ثبت تراکنش')
     }
-  }
+  }, [
+    mode,
+    confirmPrice,
+    effectivePrice,
+    quantity,
+    transactionType,
+    currency,
+    userId,
+    userInfo,
+  ])
 
-  // تنظیم عنوان فیلد قیمت بر اساس حالت mode
-  let priceLabel = ''
-  if (mode === 'automatic') {
-    priceLabel = 'قیمت (از API)'
-  } else if (mode === 'live') {
-    priceLabel = 'قیمت (دستی)'
-  } else if (mode === 'suggested') {
-    priceLabel = 'قیمت (پیشنهاد)'
-  }
+  const handleSubmit = useCallback(
+    async e => {
+      e.preventDefault()
+      if (quantityError) {
+        alert(quantityError)
+        return
+      }
+      if (
+        (mode === 'live' || mode === 'suggested') &&
+        (!manualPrice || isNaN(manualPrice))
+      ) {
+        alert('لطفاً یک قیمت معتبر وارد کنید.')
+        return
+      }
+
+      if (mode === 'automatic') {
+        try {
+          // دریافت مجدد قیمت
+          const fetchedPrice = await PriceService.fetchUSDTPrice('sell')
+          console.log('قیمت جدید دریافت شد:', fetchedPrice)
+          // مقایسه قیمت جدید با قیمت فعلی فرم (effectivePrice)
+          if (Math.abs(fetchedPrice - effectivePrice) < priceThreshold) {
+            // اگر قیمت تغییر نکرده باشد، دیالوگ تأیید نمایش داده می‌شود
+            setConfirmPrice(fetchedPrice)
+            setConfirmDialogOpen(true)
+            setCountdown(10)
+            const timer = setInterval(() => {
+              setCountdown(prev => (prev > 0 ? prev - 1 : 0))
+            }, 1000)
+            setTimeout(() => {
+              clearInterval(timer)
+              setConfirmDialogOpen(false)
+            }, 10000)
+          } else {
+            // اگر قیمت تغییر کرده باشد، قیمت جدید به‌روز شده و مجموع محاسبه می‌شود
+            setPrice(fetchedPrice)
+            alert('قیمت تغییر کرده است. لطفاً دوباره دکمه ثبت معامله را بزنید.')
+          }
+        } catch (error) {
+          console.error('خطا در دریافت قیمت جدید:', error)
+          alert('خطا در دریافت قیمت جدید')
+        }
+      } else {
+        await finalizeTransaction()
+      }
+    },
+    [
+      mode,
+      quantityError,
+      manualPrice,
+      quantity,
+      transactionType,
+      currency,
+      userId,
+      userInfo,
+      finalizeTransaction,
+      effectivePrice,
+    ],
+  )
+
+  const priceLabel = useMemo(() => {
+    if (mode === 'automatic') {
+      return 'قیمت (از API)'
+    } else if (mode === 'live') {
+      return 'قیمت (دستی)'
+    } else if (mode === 'suggested') {
+      return 'قیمت (پیشنهاد)'
+    }
+    return ''
+  }, [mode])
 
   return (
     <Grid container spacing={2} padding={1}>
-      {/* ستون فرم و نوار تغییر حالت معامله */}
       <Grid item xs={12} md={4}>
-        {/* نوار تغییر حالت معامله به اندازه فرم */}
         <ToggleButtonGroup
           color='primary'
           value={mode}
@@ -217,22 +371,21 @@ const Transaction = () => {
           }}
           sx={{
             width: '100%',
-            mt: 0.5, // فاصله کمی از بالای صفحه
-            mb: 1, // فاصله از پایین نوار تغییر حالت
+            mt: 0.5,
+            mb: 1,
             borderRadius: 1,
             '& .MuiToggleButton-root': { fontSize: '0.8rem', px: 1, py: 0.5 },
           }}
         >
           <ToggleButton value='automatic'>اتوماتیک</ToggleButton>
           <ToggleButton value='suggested'>پیشنهادی</ToggleButton>
-          <ToggleButton value='live'>روی خط</ToggleButton>
+          <ToggleButton value='live'>فردایی</ToggleButton>
         </ToggleButtonGroup>
 
-        {/* فرم ثبت تراکنش */}
         <Paper
           elevation={3}
           sx={{
-            padding: 2, // کاهش پدینگ برای فرم
+            padding: 2,
             backgroundColor: theme.palette.background.paper,
             maxHeight: 'calc(100vh - 100px)',
             overflow: 'auto',
@@ -343,7 +496,6 @@ const Transaction = () => {
         </Paper>
       </Grid>
 
-      {/* جدول تاریخچه تراکنش‌ها */}
       <Grid item xs={12} md={8}>
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -366,6 +518,14 @@ const Transaction = () => {
           </AccordionDetails>
         </Accordion>
       </Grid>
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        confirmPrice={confirmPrice}
+        countdown={countdown}
+        onConfirm={finalizeTransaction}
+      />
     </Grid>
   )
 }
