@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./server
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./server:/app
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    env_file:
+      - .env
+
+  frontend:
+    build:
+      context: ./react/myreactdev
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./react/myreactdev:/app
+    stdin_open: true
+    tty: true

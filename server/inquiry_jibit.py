@@ -2,7 +2,8 @@ import requests
 import json
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from datetime import datetime
+# from datetime import datetime
+from Iran_DateTime import get_iran_time
 from user_models import db
 
 # تنظیمات
@@ -24,7 +25,7 @@ class InquiryResult(db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     status = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_iran_time())
 
 
 # ---------------------- توابع Jibit ----------------------
@@ -38,13 +39,13 @@ def generate_access_token():
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             data = response.json()
-            print("Access Token Generated Successfully")
+           
             return data.get("accessToken")
         else:
-            print(f"Error generating access token: {response.status_code}")
+            
             return None
     except Exception as e:
-        print("Exception occurred while generating access token:", e)
+       
         return None
 
 def send_get_request(endpoint, access_token, params=None):
@@ -127,7 +128,7 @@ def iban_inquiry():
 
         if existing_data:
             # بازگشت داده‌های کش شده
-            print("Returning cached data from database.")
+           
             return jsonify({
                 "iban": existing_data.iban,
                 "bank_info": {
@@ -139,7 +140,7 @@ def iban_inquiry():
             })
 
         # در غیر این صورت، درخواست به API ارسال شود
-        print("No cached data. Sending request to API...")
+       
         access_token = generate_access_token()
         if not access_token:
             return jsonify({"error": "Failed to generate access token"}), 500
@@ -182,7 +183,7 @@ def card_to_iban():
 
     if existing_data:
         # اگر داده موجود باشد، نتیجه را باز می‌گرداند
-        print("Returning cached data from database.")
+       
         return jsonify({
             "card_number": existing_data.card_number,
             "iban_info": {
@@ -196,7 +197,7 @@ def card_to_iban():
 
 
     # در غیر این صورت، درخواست به API ارسال می‌شود
-    print("No cached data. Sending request to API...")
+ 
     access_token = generate_access_token()
     if not access_token:
         return jsonify({"error": "Failed to generate access token"}), 500

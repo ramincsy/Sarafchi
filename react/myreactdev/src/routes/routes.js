@@ -14,6 +14,7 @@ import AutomaticTransaction from 'pages/Transactions/AutomaticTransaction'
 import SuggestedTransaction from 'pages/Transactions/SuggestedTransaction'
 import LiveTransaction from 'pages/Transactions/LiveTransaction'
 import AllTransactionsPage from 'pages/Transactions/AllTransactionsPage'
+import Transaction from 'pages/Transactions/Transaction'
 
 // Financial related pages
 import BalancesPage from 'pages/Balances/BalancesPage'
@@ -37,7 +38,8 @@ import SendNotificationPage from 'pages/SendNotificationPage'
 // import SendPushNotificationPage from "pages/SendPushNotificationPage";
 import WithdrawUSDTPage from 'pages/Withdrawals/WithdrawUSDTPage'
 import FinancialDashboard from 'pages/Dashboards/FinancialDashboard'
-import CartModal from 'pages/CartModal'
+import CartModal from 'pages/CartModal/CartModal'
+import UserManagement from 'pages/UserManagement'
 
 // Route configurations
 export const publicRoutes = [
@@ -279,6 +281,22 @@ export const protectedRoutes = [
     element: (
       <ProtectedRoute>
         <CartModal />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/UserManagement',
+    element: (
+      <ProtectedRoute>
+        <UserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/Transaction',
+    element: (
+      <ProtectedRoute>
+        <Transaction />
       </ProtectedRoute>
     ),
   },

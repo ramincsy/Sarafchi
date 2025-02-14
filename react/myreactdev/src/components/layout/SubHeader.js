@@ -13,24 +13,29 @@ import {
 import AuthContext from 'contexts/AuthContext'
 import ApiManager from 'services/ApiManager'
 import { AccountBalanceWallet, AttachMoney, Money } from '@mui/icons-material'
-import PriceService from 'services/PriceService'
+import useUSDTPrice from 'hooks/useUSDTPrice' // فراخوانی هوک
 
 const SubHeader = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-
   const { userInfo } = useContext(AuthContext)
   const userID = userInfo?.UserID
 
-  const [balances, setBalances] = useState({ USDT: 0, IRR: 0 })
-  const [usdPrice, setUsdPrice] = useState(0)
+  // استفاده از هوک برای دریافت قیمت دلار
+  const {
+    price: usdPrice,
+    loading: priceLoading,
+    error: priceError,
+  } = useUSDTPrice('sell')
+
+  // مدیریت موجودی‌ها
+  const [balances, setBalances] = useState({ USDT: 0, TMN: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     if (userID) {
       fetchBalances(userID)
-      fetchUsdPrice()
     } else {
       setError('شناسه کاربر یافت نشد.')
       setIsLoading(false)
@@ -44,7 +49,7 @@ const SubHeader = () => {
       if (data.success && Array.isArray(data.balances)) {
         setBalances({
           USDT: getNetBalance(data.balances, 'USDT'),
-          IRR: getNetBalance(data.balances, 'IRR'),
+          TMN: getNetBalance(data.balances, 'TMN'),
         })
       } else {
         setError('خطا در دریافت موجودی‌ها.')
@@ -54,16 +59,6 @@ const SubHeader = () => {
       setError('ارتباط با سرور با مشکل مواجه شد.')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const fetchUsdPrice = async () => {
-    try {
-      const data = await PriceService.fetchPrice()
-      setUsdPrice(data.price) // فرض بر این است که مقدار قیمت دلار در data.price ذخیره شده است
-    } catch (err) {
-      console.error('خطا در دریافت قیمت دلار:', err)
-      setError('خطا در دریافت قیمت دلار.')
     }
   }
 
@@ -116,7 +111,7 @@ const SubHeader = () => {
             {title}
           </Typography>
           <Typography
-            variant='body2'
+            variant='body1'
             sx={{ color: theme.palette.common.white, fontWeight: 'bold' }}
           >
             {formatNumber(value)} {suffix}
@@ -132,23 +127,29 @@ const SubHeader = () => {
       value: balances.USDT,
       suffix: 'USDT',
       icon: <AccountBalanceWallet sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #0f4c75, #3282b8)',
+      gradient: 'linear-gradient(135deg, #373b44, #4286f4)',
     },
     {
       title: 'قیمت دلار',
       value: usdPrice,
       suffix: 'تومان',
       icon: <AttachMoney sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #67d60f, #24f2a7)',
+      gradient: 'linear-gradient(135deg,#5a3f37, #2c7744)',
     },
     {
       title: 'موجودی ریالی',
-      value: balances.IRR,
-      suffix: 'IRR',
+      value: balances.TMN,
+      suffix: 'TMN',
       icon: <Money sx={{ color: 'white' }} />,
-      gradient: 'linear-gradient(135deg, #1565C0, #42A5F5)',
+      gradient: 'linear-gradient(135deg, #373b44, #4286f4)',
     },
   ]
+
+  // مدیریت خطاهای کلی
+  const hasError = error || priceError
+
+  // نمایش لوادینگ اگر هر دو بخش در حال بارگذاری باشند
+  const isLoadingOverall = isLoading || priceLoading
 
   return (
     <Paper
@@ -158,7 +159,7 @@ const SubHeader = () => {
         minHeight: isMobile ? 70 : 90,
         borderBottom: `1px solid ${theme.palette.divider}`,
         background:
-          'linear-gradient(50deg, rgba(238, 242, 243, 0.8), rgba(203, 208, 232, 0.8))',
+          'linear-gradient(50deg, rgba(238, 242, 243, 0.8), rgba(238, 242, 243, 0.8))',
         backdropFilter: 'blur(10px)', // ایجاد افکت شیشهای
         display: 'flex',
         alignItems: 'center',
@@ -170,13 +171,13 @@ const SubHeader = () => {
         borderRadius: '8px', // گرد کردن گوشه‌ها
       }}
     >
-      {isLoading ? (
+      {isLoadingOverall ? (
         <Box sx={{ margin: 'auto' }}>
           <CircularProgress size={24} sx={{ color: 'white' }} />
         </Box>
-      ) : error ? (
+      ) : hasError ? (
         <Typography color='error' sx={{ margin: 'auto' }}>
-          {error}
+          {error || priceError || 'خطا در بارگذاری اطلاعات'}
         </Typography>
       ) : (
         <Box

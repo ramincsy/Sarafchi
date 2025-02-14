@@ -1,17 +1,36 @@
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-import datetime
+# from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy  # type: ignore
+from flask_marshmallow import Marshmallow  # type: ignore
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text  # type: ignore
+from Iran_DateTime import get_iran_time
 
 db = SQLAlchemy()
 ma = Marshmallow()
 
 # مدل کاربر
+
+
+class WalletsUSDT(db.Model):
+    __tablename__ = "Wallets_USDT"
+
+    WalletID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    UserID = db.Column(db.Integer, nullable=False)
+    WalletAddress = db.Column(db.String(255), nullable=False, unique=True)
+    Balance = db.Column(db.Float, default=0)  # موجودی کیف پول
+    LockedBalance = db.Column(db.Float, default=0)  # موجودی قفل شده
+    CurrencyType = db.Column(db.String(10), nullable=False, default="USDT")
+    Status = db.Column(db.String(50), default="Active")
+    CreatedAt = db.Column(db.DateTime, default=get_iran_time())
+    LastUpdated = db.Column(
+        db.DateTime, default=get_iran_time(), onupdate=get_iran_time())
+
+    def __repr__(self):
+        return f"<WalletsUSDT {self.WalletAddress} - Balance: {self.Balance}>"
+
+
 class Users(db.Model):
     __tablename__ = "Users"
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    UserID = db.Column(db.Integer, nullable=True)  # مقدار پیش‌فرض None
     FirstName = db.Column(db.String(100), nullable=False)
     LastName = db.Column(db.String(100), nullable=False)
     NationalID = db.Column(db.String(20), nullable=False, unique=True)
@@ -20,10 +39,13 @@ class Users(db.Model):
     Password = db.Column(db.String(255), nullable=False)
     CreatedBy = db.Column(db.String(100), nullable=False)
     WalletAddress = db.Column(db.String(255), nullable=True)
-    DateCreated = db.Column(db.DateTime, default=datetime.datetime.now)
+    DateCreated = db.Column(db.DateTime, default=get_iran_time())
+    Status = db.Column(db.String(50), default="Active")  # وضعیت حساب کاربر
+    LastLoginAt = db.Column(db.DateTime, nullable=True)  # آخرین زمان ورود
+    FailedLoginAttempts = db.Column(
+        db.Integer, default=0)  # تعداد تلاش‌های ناموفق
 
-    def __init__(self, UserID, FirstName, LastName, NationalID, PhoneNumber, Email, Password, CreatedBy, WalletAddress=None):
-        self.UserID = UserID
+    def __init__(self, FirstName, LastName, NationalID, PhoneNumber, Email, Password, CreatedBy, WalletAddress=None):
         self.FirstName = FirstName
         self.LastName = LastName
         self.NationalID = NationalID
@@ -33,28 +55,107 @@ class Users(db.Model):
         self.CreatedBy = CreatedBy
         self.WalletAddress = WalletAddress
 
+
 # مدل JwtTokens
 class JwtTokens(db.Model):
     __tablename__ = 'JwtTokens'
-    
+
     Id = db.Column(Integer, primary_key=True, autoincrement=True)
     UserId = db.Column(Integer, nullable=False)
     RefreshToken = db.Column(String(500), nullable=False)
     ExpireDate = db.Column(DateTime, nullable=False)
-    CreatedAt = db.Column(DateTime, nullable=False, default=datetime.datetime.now)
+    CreatedAt = db.Column(DateTime, nullable=False, default=get_iran_time())
     Revoked = db.Column(Boolean, nullable=False, default=False)
-    #DeviceId = db.Column(String(100), nullable=False)
+    IPAddress = db.Column(String(50), nullable=True)  # آدرس IP
+    LastUsedAt = db.Column(DateTime, nullable=True)  # آخرین زمان استفاده
+    DeviceId = db.Column(String(100), nullable=True)  # شناسه دستگاه
+    Purpose = db.Column(String(100), nullable=True)  # هدف استفاده از توکن
 
-    def __init__(self, user_id, refresh_token, expire_date):
+    def __init__(self, user_id, refresh_token, expire_date, ip_address=None, device_id=None, purpose=None):
         self.UserId = user_id
         self.RefreshToken = refresh_token
-        #self.DeviceId = device_id
         self.ExpireDate = expire_date
-        self.CreatedAt = datetime.datetime.now()
+        self.CreatedAt = get_iran_time()
         self.Revoked = False
+        self.IPAddress = ip_address
+        self.LastUsedAt = None
+        self.DeviceId = device_id
+        self.Purpose = purpose
+
+
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('ID', 'UserID', 'FirstName', 'LastName', 'NationalID', 'PhoneNumber', 'Email', 'Password', 'CreatedBy', 'WalletAddress', 'DateCreated')
+        fields = (
+            'ID', 'FirstName', 'LastName', 'NationalID', 'PhoneNumber',
+            'Email', 'Password', 'CreatedBy', 'WalletAddress', 'DateCreated',
+            'Status', 'LastLoginAt', 'FailedLoginAttempts'
+        )
+
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+
+
+class TRXWallet(db.Model):
+    __tablename__ = 'TRXWallet'  # نام جدول در دیتابیس
+
+    id = db.Column(db.Integer, primary_key=True)  # شناسه منحصر به فرد
+    address = db.Column(db.String(100), unique=True,
+                        nullable=False)  # آدرس کیف پول
+    used = db.Column(db.Boolean, default=False,
+                     nullable=False)  # وضعیت استفاده‌شده
+
+    def __repr__(self):
+        return f"<TRXWallet {self.address}>"
+
+
+class Notification(db.Model):
+    __tablename__ = 'Notifications'
+
+    NotificationID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    UserID = db.Column(db.Integer, nullable=False)
+    Title = db.Column(db.String(255), nullable=False)
+    Message = db.Column(db.Text, nullable=False)
+    IsRead = db.Column(db.Boolean, default=False)
+    Timestamp = db.Column(db.DateTime, default=get_iran_time())
+    Type = db.Column(db.String(50), nullable=True)
+
+    def __repr__(self):
+        return f"<Notification(NotificationID={self.NotificationID}, Title='{self.Title}', IsRead={self.IsRead})>"
+
+class UserTokens(db.Model):
+    __tablename__ = 'UserTokens_firebase'
+
+    UserID = db.Column(db.Integer, primary_key=True, nullable=False)
+    Token = db.Column(db.String(255), primary_key=True, nullable=False)
+
+    def __repr__(self):
+        return f"<UserTokens(UserID={self.UserID}, Token={self.Token})>"
+
+
+# مدل PushNotifications
+class PushNotifications(db.Model):
+    __tablename__ = 'PushNotifications'
+
+    # ستون‌های جدول
+    NotificationID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    SenderID = db.Column(db.Integer, nullable=False)  # شناسه فرستنده
+    ReceiverID = db.Column(db.Integer, nullable=False)  # شناسه گیرنده
+    Title = db.Column(db.String(255), nullable=True)  # عنوان نوتیفیکیشن
+    Message = db.Column(db.Text, nullable=True)  # متن نوتیفیکیشن
+    SentAt = db.Column(db.DateTime, nullable=False)  # تاریخ و ساعت ارسال
+    IsDelivered = db.Column(db.Boolean, nullable=False, default=False)  # وضعیت تحویل
+    DeliveryDetails = db.Column(db.Text, nullable=True)  # جزئیات تحویل
+    CreatedAt = db.Column(db.DateTime, default=get_iran_time())  # تاریخ و ساعت ایجاد رکورد
+
+    def __repr__(self):
+        return (
+            f"<PushNotifications("
+            f"NotificationID={self.NotificationID}, "
+            f"SenderID={self.SenderID}, "
+            f"ReceiverID={self.ReceiverID}, "
+            f"Title='{self.Title}', "
+            f"SentAt='{self.SentAt}', "
+            f"IsDelivered={self.IsDelivered}"
+            f")>"
+        )

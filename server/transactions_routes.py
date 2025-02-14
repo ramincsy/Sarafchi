@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from datetime import datetime
+# from datetime import datetime
 from user_models import db, ma
 import traceback
+from Iran_DateTime import get_iran_time
 
 # تعریف Blueprint برای تراکنش‌ها
 transactions_bp = Blueprint('transactions', __name__)
@@ -11,7 +12,7 @@ transactions_bp = Blueprint('transactions', __name__)
 class Transaction(db.Model):
     __tablename__ = 'Transactions'
     TransactionID = db.Column(db.Integer, primary_key=True)
-    TransactionDateTime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    TransactionDateTime = db.Column(db.DateTime, nullable=False, default=get_iran_time())
     UserID = db.Column(db.Integer, nullable=False)
     Quantity = db.Column(db.Float, nullable=False)
     Price = db.Column(db.Float, nullable=False)
@@ -34,7 +35,8 @@ transactions_schema = TransactionSchema(many=True)
 @transactions_bp.route('/transactions', methods=['POST'])
 def create_transaction():
     data = request.json
-    print("Data received in create_transaction:", data)
+    transaction_datetime = get_iran_time()
+   
     try:
         with db.session.begin():
             result = db.session.execute(text("""
@@ -46,7 +48,8 @@ def create_transaction():
                     @Position=:Position, 
                     @CurrencyType=:CurrencyType, 
                     @Description=:Description, 
-                    @CreatedBy=:CreatedBy
+                    @CreatedBy=:CreatedBy,
+                    @TransactionDateTime=:TransactionDateTime
             """), {
                 "UserID": data['UserID'],
                 "Quantity": data['Quantity'],
@@ -55,7 +58,8 @@ def create_transaction():
                 "Position": data['Position'],
                 "CurrencyType": data['CurrencyType'],
                 "Description": data.get('Description', None),
-                "CreatedBy": data['CreatedBy']
+                "CreatedBy": data['CreatedBy'],
+                "TransactionDateTime": transaction_datetime
             })
 
             rows = result.fetchall()
@@ -71,9 +75,7 @@ def create_transaction():
             return jsonify({"message": "Transaction created but no ID returned"}), 201
 
     except Exception as e:
-        print("Error while creating transaction:", str(e))
-        print("Traceback:")
-        print(traceback.format_exc())
+       
         return jsonify({"error": str(e)}), 400
 
 # واکشی تمامی تراکنش‌ها
@@ -96,11 +98,10 @@ def confirm_transaction(transaction_id):
                 text("EXEC spConfirmTransaction @TransactionID=:transaction_id"),
                 {"transaction_id": transaction_id}
             )
-            print("Result from spConfirmTransaction:", result.rowcount)
+           
         return jsonify({"success": True, "message": "Transaction confirmed."}), 200
     except Exception as e:
-        print(f"Error confirming transaction ID {transaction_id}: {str(e)}")
-        print("Traceback:", traceback.format_exc())
+     
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -117,6 +118,5 @@ def cancel_transaction(transaction_id):
             print(f"Rows affected: {result.rowcount}")
         return jsonify({"success": True, "message": "Transaction canceled successfully."}), 200
     except Exception as e:
-        print(f"Error canceling transaction ID {transaction_id}: {str(e)}")
-        print("Traceback:", traceback.format_exc())
+      
         return jsonify({"success": False, "error": f"SQL Error: {str(e)}"}), 500

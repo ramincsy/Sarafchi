@@ -235,12 +235,10 @@ const CartModalPage = () => {
   // 3. معاملات در حال برسی: تراکنش‌هایی که وضعیت آن‌ها Pending یا در حال برسی بوده و تاریخ آن‌ها امروز است.
   const transactionsUnderReview = useMemo(() => {
     return transactionsData.filter(tx => {
-      const status = (tx.Status || tx.status || '').trim() // حذف فاصله‌های اضافی
+      const status = tx.Status || tx.status
       const dateValue = tx.TransactionDateTime || tx.date
       return (
-        (status === 'Pending' ||
-          status === 'در حال برسی' ||
-          status === 'Processing') &&
+        (status === 'Pending' || status === 'در حال برسی') &&
         dateValue &&
         isToday(dateValue)
       )
