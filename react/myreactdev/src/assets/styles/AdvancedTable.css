@@ -1,27 +1,47 @@
-/* استایل کلی جدول */
+/* AdvancedTable.css */
+
+/* استایل کلی جدول با افکت شیشه‌ای */
 .advanced-table-container {
   width: 100%;
   overflow-x: auto;
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   padding: 15px;
   margin-top: 20px;
 }
 
-/* استایل هدر جدول */
-.advanced-table-container table {
-  width: 100%;
-  border-collapse: collapse;
+/* اگر Paper از MUI استفاده کند */
+.advanced-table-container.MuiPaper-root {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+/* حذف پس‌زمینه ثابت از تمام عناصر جدول */
+.advanced-table-container table,
+.advanced-table-container thead,
+.advanced-table-container tbody,
+.advanced-table-container tr,
+.advanced-table-container th,
+.advanced-table-container td {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* استایل هدر جدول به صورت شیشه‌ای */
 .advanced-table-container thead {
-  background-color: #1976d2;
-  color: white;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
 }
 
+/* سلول‌های هدر جدول */
 .advanced-table-container th {
-  padding: 10px;
+  padding: 10px !important;
   text-align: left;
   font-weight: bold;
   position: sticky;
@@ -29,18 +49,19 @@
   z-index: 2;
 }
 
-/* استایل سلول‌های جدول */
+/* سلول‌های بدنه جدول */
 .advanced-table-container td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  padding: 10px !important;
+  border-bottom: 1px solid rgba(221, 221, 221, 0.5) !important;
 }
 
-/* استایل ردیف‌های جدول */
+/* حالت hover برای ردیف‌های جدول */
 .advanced-table-container tbody tr:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(245, 245, 245, 0.3) !important;
 }
 
-/* استایل نوار جستجو */
+/* سایر استایل‌های موجود (جستجو، عملیات، صفحه‌بندی و ...) بدون تغییر باقی می‌مانند */
+
 .advanced-table-search {
   display: flex;
   justify-content: space-between;
@@ -55,7 +76,6 @@
   border-radius: 5px;
 }
 
-/* دکمه‌های عملیات */
 .advanced-table-actions {
   display: flex;
   gap: 10px;
@@ -88,7 +108,6 @@
   background-color: #b71c1c;
 }
 
-/* استایل مدیریت ستون‌ها */
 .column-visibility-toggle {
   display: flex;
   flex-wrap: wrap;
@@ -114,7 +133,6 @@
   color: black;
 }
 
-/* تغییر اندازه ستون‌ها */
 .resizable-header {
   display: flex;
   align-items: center;
@@ -135,7 +153,6 @@
   background-color: #1976d2;
 }
 
-/* تغییر اندازه کل جدول */
 .table-resizer {
   width: 10px;
   height: 10px;
@@ -147,7 +164,6 @@
   border-radius: 50%;
 }
 
-/* استایل وضعیت */
 .status {
   font-weight: bold;
   padding: 5px 10px;
@@ -155,7 +171,6 @@
   text-align: center;
 }
 
-/* رنگ‌بندی وضعیت‌ها */
 .status.approved {
   background-color: #e8f5e9;
   color: #388e3c;
@@ -171,13 +186,11 @@
   color: #f57c00;
 }
 
-/* لودینگ */
 .loading-container {
   text-align: center;
   padding: 20px;
 }
 
-/* پیام‌های خطا */
 .error-message {
   color: #d32f2f;
   background-color: #fddede;
@@ -187,7 +200,6 @@
   margin-bottom: 15px;
 }
 
-/* دکمه دانلود اکسل */
 .excel-download-btn {
   background-color: #388e3c;
   color: white;
@@ -202,7 +214,6 @@
   background-color: #2e7d32;
 }
 
-/* استایل صفحه‌بندی */
 .advanced-table-pagination {
   display: flex;
   justify-content: space-between;
@@ -210,7 +221,6 @@
   padding: 10px;
 }
 
-/* استایل ریسپانسیو */
 @media (max-width: 768px) {
   .advanced-table-container {
     padding: 10px;

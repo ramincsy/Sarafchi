@@ -1,0 +1,207 @@
+/* پس‌زمینه و افکت شیشه‌ای */
+:root {
+  --logo-top-margin: -40px; /* فاصله لوگو از بالای باکس */
+  --title-margin-top: -35px; /* فاصله بین لوگو و عنوان ورود */
+}
+
+.glass-container {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff6b6b,
+    rgb(76, 96, 206),
+    #9b59b6,
+    #e74c3c
+  );
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.glass-container::before,
+.glass-container::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  filter: blur(30px);
+}
+
+.glass-container::before {
+  top: -50px;
+  left: -50px;
+}
+
+.glass-container::after {
+  bottom: -50px;
+  right: -50px;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 8px 32px 0 rgba(2, 3, 17, 0.37) !important;
+  padding: 16px;
+}
+
+/* استایل‌های مربوط به هدر و لوگو */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-logo {
+  width: 380px;
+  height: auto;
+  margin-top: var(--logo-top-margin);
+}
+
+.login-header .login-title {
+  color: white;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  margin-top: var(--title-margin-top);
+}
+
+/* فرم ورود */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-form .login-textfield {
+  margin: 8px 0 12px 0 !important;
+}
+
+/* استایل چک‌باکس‌ها */
+.login-checkbox {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.login-terms-label,
+.login-remember-label {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.login-terms-link {
+  color: #ff8e53;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.login-terms-link:hover {
+  text-decoration: underline;
+}
+
+.login-terms-control,
+.login-remember-control {
+  margin-top: 8px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+/* پیام خطا */
+.login-error-alert {
+  margin-top: 16px;
+  background-color: rgba(255, 87, 87, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 87, 87, 0.3);
+}
+
+/* دکمه ورود */
+.login-button {
+  background: linear-gradient(45deg, #fe6b8b 30%, #ff8e53 90%);
+  color: white;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  width: 40%;
+}
+
+.login-button:hover {
+  background: linear-gradient(45deg, #ff8e53 30%, #fe6b8b 90%);
+  transform: scale(1.02);
+}
+
+.login-button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  transform: none;
+}
+
+.login-button-progress {
+  color: white;
+}
+
+/* موج در پایین صفحه */
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 88.7'%3E%3Cpath d='M800 56.9c-155.5 0-204.9-50-405.5-49.9-200 0-250 49.9-394.5 49.9v31.8h800v-.2-31.6z' fill='%23ffffff' opacity='.1'/%3E%3C/svg%3E");
+  opacity: 0.3;
+  animation: wave 10s infinite linear;
+}
+
+@keyframes wave {
+  to {
+    background-position-x: 800px;
+  }
+}
+
+/* تغییر رنگ برچسب‌های ایمیل و رمز عبور */
+.login-textfield .MuiInputLabel-root {
+  color: #fcebe2 !important;
+}
+
+.login-textfield .MuiInputLabel-root.Mui-focused,
+.login-textfield .MuiInputLabel-root.MuiInputLabel-shrink {
+  color: #f0eae7 !important;
+}
+
+/* تغییر رنگ چک‌باکس‌ها */
+.login-checkbox.Mui-checked {
+  color: #0d254e !important;
+}
+
+/* استایل پلیس‌هولدر */
+.login-textfield .MuiInputBase-input::placeholder {
+  color: #f1f0ef !important;
+  opacity: 1;
+}
+
+/* استایل اتوفیل برای فیلدهای ورودی */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}

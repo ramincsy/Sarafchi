@@ -1,74 +1,106 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import Box from "@mui/material/Box";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-import HomeIcon from "@mui/icons-material/Home";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import PersonIcon from "@mui/icons-material/Person";
-import SearchIcon from "@mui/icons-material/Search";
-import { useNavigate, useLocation } from "react-router-dom";
 import { styled } from "@mui/system";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import StorefrontIcon from "@mui/icons-material/Storefront";
+import { useNavigate, useLocation } from "react-router-dom";
+
+// آیکون‌ها
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import PersonIcon from "@mui/icons-material/Person";
+
+// لیست گزینه‌ها
+const navigationItems = [
+  {
+    label: "برداشت ها",
+    icon: <MonetizationOnIcon />,
+    path: "/WithdrawPage",
+  },
+  {
+    label: "معاملات",
+    icon: <StorefrontIcon />,
+    path: "/automatic-transaction",
+  },
+  {
+    label: "موجودی",
+    icon: <AccountBalanceWalletIcon />,
+    path: "/balances",
+  },
+  {
+    label: "پروفایل",
+    icon: <PersonIcon />,
+    path: "/ProfilePage",
+  },
+];
+
 // استایل‌های سفارشی برای BottomNavigation
 const StyledBottomNavigation = styled(BottomNavigation)(({ theme }) => ({
-  backdropFilter: "blur(10px)",
+  position: "fixed",
+  bottom: 5, // فاصله کمتر از پایین صفحه
+  left: "50%",
+  transform: "translateX(-50%)", // مرکز کردن
+  width: "95%", // عرض مناسب برای بیضی
+  maxWidth: 400,
+  borderRadius: "50px", // شکل بیضی کامل
+  backdropFilter: "blur(5px)",
   backgroundColor:
     theme.palette.mode === "light"
-      ? "rgba(255, 255, 255, 0.7)" // پس‌زمینه شفاف برای تم لایت
-      : "rgba(18, 18, 18, 0.7)", // پس‌زمینه شفاف برای تم دارک
-  boxShadow: theme.shadows[4],
-  borderTopLeftRadius: "20px",
-  borderTopRightRadius: "20px",
-  transition: "background-color 0.3s ease, box-shadow 0.3s ease",
+      ? "rgba(255, 255, 255, 0.54)"
+      : "rgba(30, 30, 30, 0.9)",
+  boxShadow: theme.shadows[6],
+  transition: "all 0.3s ease",
+  zIndex: 1000,
+
   "& .MuiBottomNavigationAction-root": {
-    color:
-      theme.palette.mode === "light"
-        ? theme.palette.text.secondary // رنگ متن برای تم لایت
-        : theme.palette.text.primary, // رنگ متن برای تم دارک
-    transition: "color 0.3s ease",
+    color: theme.palette.text.secondary, // رنگ متن غیرفعال
+    transition:
+      "color 0.3s ease, transform 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease",
+
+    // تنظیمات پیش‌فرض برای تمام دکمه‌ها
+    height: 60, // افزایش ارتفاع دکمه‌ها
+    padding: "8px 16px", // افزایش فاصله داخلی
+    fontSize: "18px", // اندازه فونت پیش‌فرض
+    fontWeight: 900, // وزن فونت پیش‌فرض
+
     "&.Mui-selected": {
-      color: theme.palette.primary.main, // رنگ آیکون و متن در حالت فعال
+      color: "#000", // رنگ فعال (نارنجی)
+      fontSize: "20px", // اندازه فونت بزرگ‌تر در حالت فعال
+      fontWeight: 1000, // وزن فونت کلفت‌تر در حالت فعال
+      transform: "scale(1.1)", // انیمیشن بزرگ‌تر شدن
+      // backgroundColor: "rgba(255, 87, 34, 0.1)", // پس‌زمینه نرم برای منوی فعال
+      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)", // ظل برای برجستگی
     },
   },
 }));
 
 const MobileBottomNavigation = () => {
-  const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // استفاده از breakpoints تم
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // فقط برای دستگاه‌های موبایل
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [value, setValue] = React.useState(0);
 
   // تعیین مقدار فعال بر اساس مسیر فعلی
-  const getActiveValue = () => {
-    switch (location.pathname) {
-      case "/home":
-        return 0;
-      case "/favorites":
-        return 1;
-      case "/search":
-        return 2;
-      case "/profile":
-        return 3;
-      default:
-        return 0;
-    }
-  };
-
-  const [value, setValue] = React.useState(getActiveValue());
+  useEffect(() => {
+    const findActiveIndex = navigationItems.findIndex((item) =>
+      location.pathname.includes(item.path)
+    );
+    setValue(findActiveIndex !== -1 ? findActiveIndex : 0);
+  }, [location]);
 
   if (!isMobile) return null; // فقط برای موبایل نمایش داده شود
 
   return (
     <Box
       sx={{
+        display: "flex",
+        justifyContent: "center",
         width: "100%",
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        zIndex: 1000,
+        position: "relative",
       }}
     >
       <StyledBottomNavigation
@@ -76,34 +108,16 @@ const MobileBottomNavigation = () => {
         value={value}
         onChange={(event, newValue) => {
           setValue(newValue);
-          switch (newValue) {
-            case 0:
-              navigate("/WithdrawPage");
-              break;
-            case 1:
-              navigate("/automatic-transaction");
-              break;
-            case 2:
-              navigate("/balances");
-              break;
-            case 3:
-              navigate("/ProfilePage");
-              break;
-            default:
-              break;
-          }
+          navigate(navigationItems[newValue].path);
         }}
       >
-        <BottomNavigationAction
-          label="برداشت ها"
-          icon={<MonetizationOnIcon />}
-        />
-        <BottomNavigationAction label="سفارش گزاری" icon={<StorefrontIcon />} />
-        <BottomNavigationAction
-          label="موجودی"
-          icon={<AccountBalanceWalletIcon />}
-        />
-        <BottomNavigationAction label="پروفایل" icon={<PersonIcon />} />
+        {navigationItems.map((item, index) => (
+          <BottomNavigationAction
+            key={index}
+            label={item.label}
+            icon={item.icon}
+          />
+        ))}
       </StyledBottomNavigation>
     </Box>
   );

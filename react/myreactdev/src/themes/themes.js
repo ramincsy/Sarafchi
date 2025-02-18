@@ -1,3 +1,4 @@
+// themes.js
 import { createTheme } from "@mui/material/styles";
 
 // تعریف فونت Vazirmatn
@@ -6,20 +7,10 @@ const vazirmatnFont = {
   fontStyle: "normal",
   fontDisplay: "swap",
   fontWeight: 400,
-  src: `
-    url('./fonts/Vazirmatn-Regular.ttf') format('truetype')
-  `,
+  src: `url('./fonts/Vazirmatn-Regular.ttf') format('truetype')`,
 };
 
-// پالت مشترک
-const commonPalette = {
-  text: {
-    disabled: "rgba(0, 0, 0, 0.38)",
-  },
-  divider: "rgba(0, 0, 0, 0.12)",
-};
-
-// تنظیمات استایل‌های پایه
+// تنظیمات استایل‌های پایه (global)
 const baseStyleOverrides = {
   "*": {
     margin: 0,
@@ -46,211 +37,65 @@ const baseStyleOverrides = {
   },
 };
 
-// تم‌ها
-const themeConfig = {
-  light: {
-    palette: {
-      mode: "light",
-      primary: {
-        main: "#1976d2", // رنگ دکمه‌ها (اصلی)
-        contrastText: "#ffffff", // رنگ متن دکمه‌ها
-      },
-      secondary: {
-        main: "#dc004e", // رنگ دکمه‌ها (ثانویه)
-      },
-      background: {
-        default: "#f8f9fa", // رنگ پس‌زمینه صفحه
-        paper: "#ffffff", // رنگ پس‌زمینه کامپوننت‌ها
-        header: "#ffffff", // رنگ پس‌زمینه هدر
-        footer: "#f5f5f5", // رنگ پس‌زمینه فوتر
-      },
-      text: {
-        primary: "#1a2027", // رنگ متن اصلی
-        secondary: "#3f51b5", // رنگ متن ثانویه
-        header: "#1a2027", // رنگ متن هدر
-        footer: "#1a2027", // رنگ متن فوتر
-        ...commonPalette.text,
-      },
-      headerBlue: {
-        main: "#2196f3", // رنگ آبی هدر
-        contrastText: "#ffffff", // رنگ متن متناسب با رنگ آبی هدر
-      },
-      buttons: {
-        notification: "#ff9800", // رنگ دکمه نوتیفیکیشن
-        message: "#4caf50", // رنگ دکمه پیام‌ها
-        menu: "#9c27b0", // رنگ دکمه منو (همبرگر)
-        profile: "#673ab7", // رنگ دکمه پروفایل
-        search: "#2196f3", // رنگ دکمه جستجو
-      },
-      icons: {
-        menu: "#9c27b0", // رنگ آیکون منو
-        search: "#2196f3", // رنگ آیکون جستجو
-        notification: "#ff9800", // رنگ آیکون نوتیفیکیشن
-        message: "#4caf50", // رنگ آیکون پیام‌ها
-        profile: "#673ab7", // رنگ آیکون پروفایل
-      },
-      divider: "rgba(0, 0, 0, 0.12)",
-    },
-    typography: {
-      fontFamily: "Vazirmatn, Roboto, Arial, sans-serif",
-      h6: {
-        fontSize: "1.25rem",
-        fontWeight: 500,
-      },
-    },
-    shape: {
-      borderRadius: 4, // شعاع گوشه‌ها
-    },
-    components: {
-      MuiAppBar: {
-        styleOverrides: {
-          root: {
-            boxShadow: "none", // حذف سایه
-          },
-        },
-      },
-      MuiIconButton: {
-        styleOverrides: {
-          root: {
-            padding: 8, // تنظیم padding
-            color: "inherit", // استفاده از رنگ متن پیش‌فرض
-            backgroundColor: "transparent", // حذف پس‌زمینه
-            "&:hover": {
-              backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
-            },
-            "&:focus": {
-              backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
-            },
-          },
-        },
-      },
-      MuiBadge: {
-        styleOverrides: {
-          badge: {
-            backgroundColor: "#f44336", // رنگ نشان‌های Badge
-          },
-        },
-      },
-    },
-  },
-  dark: {
-    palette: {
-      mode: "dark",
-      primary: {
-        main: "#90caf9", // رنگ دکمه‌ها (اصلی)
-        contrastText: "#1a2027", // رنگ متن دکمه‌ها
-      },
-      secondary: {
-        main: "#f48fb1", // رنگ دکمه‌ها (ثانویه)
-      },
-      background: {
-        default: "#121212", // رنگ پس‌زمینه صفحه
-        paper: "#1a2027", // رنگ پس‌زمینه کامپوننت‌ها
-        header: "#1a2027", // رنگ پس‌زمینه هدر
-        footer: "#1a2027", // رنگ پس‌زمینه فوتر
-      },
-      text: {
-        primary: "#ffffff", // رنگ متن اصلی
-        secondary: "#b0bec5", // رنگ متن ثانویه
-        header: "#ffffff", // رنگ متن هدر
-        footer: "#ffffff", // رنگ متن فوتر
-        disabled: "rgba(255, 255, 255, 0.5)",
-      },
-      headerBlue: {
-        main: "#64b5f6", // رنگ آبی هدر
-        contrastText: "#ffffff", // رنگ متن متناسب با رنگ آبی هدر
-      },
-      buttons: {
-        notification: "#ffa726", // رنگ دکمه نوتیفیکیشن
-        message: "#66bb6a", // رنگ دکمه پیام‌ها
-        menu: "#ab47bc", // رنگ دکمه منو (همبرگر)
-        profile: "#7e57c2", // رنگ دکمه پروفایل
-        search: "#64b5f6", // رنگ دکمه جستجو
-      },
-      icons: {
-        menu: "#ab47bc", // رنگ آیکون منو
-        search: "#64b5f6", // رنگ آیکون جستجو
-        notification: "#ffa726", // رنگ آیکون نوتیفیکیشن
-        message: "#66bb6a", // رنگ آیکون پیام‌ها
-        profile: "#7e57c2", // رنگ آیکون پروفایل
-      },
-      divider: "rgba(255, 255, 255, 0.12)",
-    },
-    typography: {
-      fontFamily: "Vazirmatn, Roboto, Arial, sans-serif",
-      h6: {
-        fontSize: "1.25rem",
-        fontWeight: 500,
-      },
-    },
-    shape: {
-      borderRadius: 4, // شعاع گوشه‌ها
-    },
-    components: {
-      MuiAppBar: {
-        styleOverrides: {
-          root: {
-            boxShadow: "none", // حذف سایه
-          },
-        },
-      },
-      MuiIconButton: {
-        styleOverrides: {
-          root: {
-            padding: 8, // تنظیم padding
-            color: "inherit", // استفاده از رنگ متن پیش‌فرض
-            backgroundColor: "transparent", // حذف پس‌زمینه
-            "&:hover": {
-              backgroundColor: "transparent", // حذف پس‌زمینه در حالت hover
-            },
-            "&:focus": {
-              backgroundColor: "transparent", // حذف پس‌زمینه در حالت focus
-            },
-          },
-        },
-      },
-      MuiBadge: {
-        styleOverrides: {
-          badge: {
-            backgroundColor: "#f44336", // رنگ نشان‌های Badge
-          },
-        },
-      },
-    },
-  },
+// تنظیمات افکت شیشه‌ای (glass effect)
+const glassEffect = {
+  background: "rgba(255, 255, 255, 0.15)",
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(255, 255, 255, 0.2)",
+  boxShadow: "0 8px 32px 0 rgba(31,38,135,0.37)",
 };
 
-// ایجاد تم‌ها
-export const lightTheme = createTheme({
-  palette: themeConfig.light.palette,
-  typography: themeConfig.light.typography,
-  shape: themeConfig.light.shape,
+// ایجاد یک تم شیشه‌ای ثابت
+export const glassTheme = createTheme({
+  palette: {
+    mode: "light",
+    primary: {
+      main: "#1976d2",
+      contrastText: "#ffffff",
+    },
+    secondary: {
+      main: "#dc004e",
+    },
+    background: {
+      default: "#f8f9fa",
+      paper: "#ffffff", // رنگ اولیه Paper؛ اما ما override آن می‌کنیم
+      header: "#ffffff",
+      footer: "#f5f5f5",
+    },
+    text: {
+      primary: "#1a2027",
+      secondary: "#3f51b5",
+    },
+    divider: "rgba(0, 0, 0, 0.12)",
+  },
+  typography: {
+    fontFamily: "Vazirmatn, Roboto, Arial, sans-serif",
+    h6: {
+      fontSize: "1.25rem",
+      fontWeight: 500,
+    },
+  },
+  shape: {
+    borderRadius: 4,
+  },
   components: {
-    ...themeConfig.light.components,
     MuiCssBaseline: {
       styleOverrides: {
         ...baseStyleOverrides,
         "@global": {
-          "@font-face": [vazirmatnFont], // اضافه کردن فونت Vazirmatn
+          "@font-face": [vazirmatnFont],
         },
       },
     },
+    MuiPaper: {
+      styleOverrides: {
+        root: glassEffect,
+      },
+    },
+    // در صورت نیاز می‌توانید overrideهای اضافی برای سایر کامپوننت‌هایی که از Paper استفاده می‌کنند (Dialog، Card و ...) اضافه کنید.
   },
 });
 
-export const darkTheme = createTheme({
-  palette: themeConfig.dark.palette,
-  typography: themeConfig.dark.typography,
-  shape: themeConfig.dark.shape,
-  components: {
-    ...themeConfig.dark.components,
-    MuiCssBaseline: {
-      styleOverrides: {
-        ...baseStyleOverrides,
-        "@global": {
-          "@font-face": [vazirmatnFont], // اضافه کردن فونت Vazirmatn
-        },
-      },
-    },
-  },
-});
+// در صورت نیاز به استفاده از خروجی‌های lightTheme و darkTheme به عنوان نام‌های دیگر، می‌توانیم آن‌ها را به صورت زیر صادر کنیم:
+export const lightTheme = glassTheme;
+export const darkTheme = glassTheme;

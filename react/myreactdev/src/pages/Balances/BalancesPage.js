@@ -141,15 +141,7 @@ const BalancesPage = () => {
   };
 
   return (
-    <Box sx={{ padding: 3, backgroundColor: theme.palette.background.default }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        align="center"
-        sx={{ color: theme.palette.primary.main, fontWeight: "bold" }}
-      >
-        وضعیت مالی
-      </Typography>
+    <Box sx={{ padding: 3, backgroundColor: "rgba(248, 236, 236, 0)" }}>
       <Grid container spacing={4} justifyContent="center">
         {balances.map((balance, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>

@@ -1,5 +1,5 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useContext, useEffect } from "react";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Container,
   Typography,
@@ -9,34 +9,60 @@ import {
   Alert,
   CircularProgress,
   Paper,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import AuthContext from "contexts/AuthContext";
-import { getOrCreateUUID } from "utils/uuidManager"; // استفاده از تابع مرکزی
-import { getIPAddress } from "utils/ipHelper"; // فایل کمکی برای دریافت IP
-import Avatar from "@mui/material/Avatar";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { getOrCreateUUID } from "utils/uuidManager";
+import { getIPAddress } from "utils/ipHelper";
+import TwoFactorModal from "./TwoFactorModal";
+import "./loginStyles.css";
+import logo from "assets/styles/images/logo-login.png";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [openTwoFactorModal, setOpenTwoFactorModal] = useState(false);
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext); // استفاده از متد login از AuthContext
+  const { login } = useContext(AuthContext);
+  const [isFirstAuthCompleted, setIsFirstAuthCompleted] = useState(false);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const needs2FA = localStorage.getItem("needs2FA");
+      if (needs2FA === "true") {
+        setOpenTwoFactorModal(true);
+      }
+    };
+    checkAuthStatus();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!acceptedTerms) {
+      setError("لطفاً قوانین و مقررات را مطالعه و تایید کنید");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const deviceId = getOrCreateUUID();
       const ipAddress = await getIPAddress();
 
-      await login(email, password, ipAddress, deviceId); // استفاده از متد login از AuthContext
+      await login(email, password, ipAddress, deviceId);
 
-      console.log("Login successful. Navigating to dashboard...");
-      navigate("/adminDashboard");
+      // ذخیره وضعیت در localStorage و فعال کردن مودال 2FA
+      localStorage.setItem("needs2FA", "true");
+      setOpenTwoFactorModal(true);
+      setIsFirstAuthCompleted(true);
     } catch (err) {
       console.error("Login failed:", err);
       setError(
@@ -49,56 +75,106 @@ const LoginPage = () => {
     }
   };
 
+  const handleTwoFactorSubmit = () => {
+    if (twoFactorCode.length > 0) {
+      localStorage.removeItem("needs2FA");
+      navigate("/CartModal");
+      // ریست کردن فرم
+      setEmail("");
+      setPassword("");
+      setTwoFactorCode("");
+      setOpenTwoFactorModal(false);
+    }
+  };
+
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            ورود
-          </Typography>
-        </Box>
-        <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="ایمیل"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="رمز عبور"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {error && <Alert severity="error">{error}</Alert>}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={isLoading}
-          >
-            {isLoading ? <CircularProgress size={24} /> : "ورود"}
-          </Button>
-        </Box>
-      </Paper>
-    </Container>
+    <div className="glass-container">
+      <div className="wave"></div>
+      <Container component="main" maxWidth="xs">
+        <Paper className="glass-card">
+          <Box className="login-header">
+            <img src={logo} alt="Logo" className="login-logo" />
+          </Box>
+          <Box component="form" onSubmit={handleLogin} className="login-form">
+            <TextField
+              fullWidth
+              required
+              placeholder="ایمیل"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="login-textfield"
+            />
+            <TextField
+              fullWidth
+              required
+              placeholder="پسورد"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="login-textfield"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="login-checkbox"
+                />
+              }
+              label={
+                <Typography component="span" className="login-terms-label">
+                  {"قوانین و مقررات سایت را "}
+                  <RouterLink to="/terms" className="login-terms-link">
+                    مطالعه کردم
+                  </RouterLink>
+                  {" می‌پذیرم"}
+                </Typography>
+              }
+              className="login-terms-control"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="login-checkbox"
+                />
+              }
+              label={
+                <Typography className="login-remember-label">
+                  مرا به خاطر بسپار
+                </Typography>
+              }
+              className="login-remember-control"
+            />
+            {error && (
+              <Alert severity="error" className="login-error-alert">
+                {error}
+              </Alert>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isLoading || !acceptedTerms}
+              className="login-button"
+            >
+              {isLoading ? (
+                <CircularProgress size={24} className="login-button-progress" />
+              ) : (
+                "ورود"
+              )}
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+      <TwoFactorModal
+        open={openTwoFactorModal}
+        twoFactorCode={twoFactorCode}
+        setTwoFactorCode={setTwoFactorCode}
+        onSubmit={handleTwoFactorSubmit}
+        onClose={() => setOpenTwoFactorModal(false)}
+      />
+    </div>
   );
 };
 

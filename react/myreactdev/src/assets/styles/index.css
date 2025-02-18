@@ -11,3 +11,32 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff6b6b,
+    rgb(76, 96, 206),
+    #9b59b6,
+    #e74c3c
+  );
+  background-size: 400% 400%;
+  animation: gradientBG 20s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

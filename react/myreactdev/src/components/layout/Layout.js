@@ -1,45 +1,34 @@
 import React, {
   useState,
-  useEffect,
   useRef,
   useMemo,
   useCallback,
+  useEffect,
 } from "react";
 import { Box, CssBaseline, useTheme, useMediaQuery } from "@mui/material";
 import Header from "components/layout/Header";
 import Footer from "components/layout/Footer";
 import MobileBottomNavigation from "components/common/MobileBottomNavigation";
-import { useDarkMode } from "contexts/DarkModeContext";
 
 const Layout = ({ children }) => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
-  const { mode } = useDarkMode();
   const sidebarRef = useRef(null);
   const theme = useTheme();
-
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  // استفاده از استایل‌های شیشه‌ای ثابت در کل صفحه
   const styles = useMemo(
     () => ({
       root: {
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
-        backgroundColor:
-          mode === "dark"
-            ? theme.palette.background.default
-            : theme.palette.grey[100],
-        transition: theme.transitions.create(["background-color"], {
-          duration: theme.transitions.duration.standard,
-        }),
+        backgroundColor: "transparent", // پس‌زمینه شیشه‌ای (شیشه‌ای بودن پس‌زمینه در سطح global تعیین شده است)
       },
       main: {
         flexGrow: 1,
         padding: theme.spacing(3),
-        backgroundColor:
-          mode === "dark"
-            ? theme.palette.background.default
-            : theme.palette.common.white,
+        backgroundColor: "transparent", // پس‌زمینه شیشه‌ای برای بخش main
         transition: theme.transitions.create(["background-color"], {
           duration: theme.transitions.duration.standard,
         }),
@@ -50,7 +39,9 @@ const Layout = ({ children }) => {
         left: 0,
         width: "250px",
         height: "100vh",
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: "rgba(255,255,255,0.15)", // افکت شیشه‌ای ثابت
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255,255,255,0.2)",
         boxShadow: theme.shadows[4],
         transform: isSidebarVisible ? "translateX(0)" : "translateX(-100%)",
         transition: theme.transitions.create(["transform"], {
@@ -69,7 +60,7 @@ const Layout = ({ children }) => {
         display: isSidebarVisible ? "block" : "none",
       },
     }),
-    [mode, theme, isSidebarVisible]
+    [theme, isSidebarVisible]
   );
 
   const toggleSidebar = useCallback(() => {
@@ -78,11 +69,7 @@ const Layout = ({ children }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target) &&
-        !event.target.closest(".MuiIconButton-root")
-      ) {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setSidebarVisible(false);
       }
     };
@@ -115,21 +102,14 @@ const Layout = ({ children }) => {
   return (
     <Box sx={styles.root}>
       <CssBaseline />
-
       <Header
         onToggleSidebar={toggleSidebar}
         isSidebarVisible={isSidebarVisible}
       />
-
-      {/* Sidebar Overlay */}
       {isSidebarVisible && <Box sx={styles.overlay} onClick={toggleSidebar} />}
-
-      {/* Sidebar */}
       <Box ref={sidebarRef} sx={styles.sidebar}>
         {/* Sidebar Content */}
       </Box>
-
-      {/* Main Content */}
       <Box
         component="main"
         sx={styles.main}
@@ -138,8 +118,6 @@ const Layout = ({ children }) => {
       >
         {children}
       </Box>
-
-      {/* Footer or Mobile Navigation */}
       {isMobile ? <MobileBottomNavigation /> : <Footer />}
     </Box>
   );

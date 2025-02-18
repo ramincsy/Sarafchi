@@ -1,69 +1,69 @@
 // src/routes/routes.js
-import ProtectedRoute from 'components/common/ProtectedRoute'
+import ProtectedRoute from "components/common/ProtectedRoute";
 
 // Import all components directly
-import LoginPage from 'pages/Auth/LoginPage'
-import UnauthorizedPage from 'pages/Auth/UnauthorizedPage'
-import DashboardPage from 'pages/Dashboards/DashboardPage'
-import AdminDashboard from 'pages/Dashboards/AdminDashboard'
-import CreateUser from 'pages/CreateUser'
-import ProfilePage from 'pages/Profile/ProfilePage'
+import LoginPage from "pages/Auth/LoginPage";
+import UnauthorizedPage from "pages/Auth/UnauthorizedPage";
+import DashboardPage from "pages/Dashboards/DashboardPage";
+import AdminDashboard from "pages/Dashboards/AdminDashboard";
+import CreateUser from "pages/CreateUser";
+import ProfilePage from "pages/Profile/ProfilePage";
 
 // Transaction related pages
-import AutomaticTransaction from 'pages/Transactions/AutomaticTransaction'
-import SuggestedTransaction from 'pages/Transactions/SuggestedTransaction'
-import LiveTransaction from 'pages/Transactions/LiveTransaction'
-import AllTransactionsPage from 'pages/Transactions/AllTransactionsPage'
-import Transaction from 'pages/Transactions/Transaction'
+import AutomaticTransaction from "pages/Transactions/AutomaticTransaction";
+import SuggestedTransaction from "pages/Transactions/SuggestedTransaction";
+import LiveTransaction from "pages/Transactions/LiveTransaction";
+import AllTransactionsPage from "pages/Transactions/AllTransactionsPage";
+import Transaction from "pages/Transactions/Transaction";
 
 // Financial related pages
-import BalancesPage from 'pages/Balances/BalancesPage'
-import DepositPage from 'pages/Deposit/DepositPage'
-import WithdrawPage from 'pages/Withdrawals/WithdrawPage'
-import AllWithdrawalsPage from 'pages/Withdrawals/AllWithdrawalsPage'
-import ExchangePrices from 'pages/ExchangePrices/ExchangePrices'
-import JibitPage from 'pages/Jibit/JibitPage'
+import BalancesPage from "pages/Balances/BalancesPage";
+import DepositPage from "pages/Deposit/DepositPage";
+import WithdrawPage from "pages/Withdrawals/WithdrawPage";
+import AllWithdrawalsPage from "pages/Withdrawals/AllWithdrawalsPage";
+import ExchangePrices from "pages/ExchangePrices/ExchangePrices";
+import JibitPage from "pages/Jibit/JibitPage";
 
 // Admin management pages
-import RolesPermissionsManager from 'pages/RolesPermissionsManager'
-import PageManager from 'pages/PageManager'
-import RoleManagement from 'pages/RoleManagement'
-import PermissionManagement from 'pages/PermissionManagement'
-import UserRoleManagement from 'pages/UserRoleManagement'
+import RolesPermissionsManager from "pages/RolesPermissionsManager";
+import PageManager from "pages/PageManager";
+import RoleManagement from "pages/RoleManagement";
+import PermissionManagement from "pages/PermissionManagement";
+import UserRoleManagement from "pages/UserRoleManagement";
 
-import TestRefreshTokenPage from 'pages/TestRefreshTokenPage'
-import UsersWalletsPage from 'pages/Blockchain/Tron/UsersWalletsPage'
-import Notifications from 'pages/Notifications'
-import SendNotificationPage from 'pages/SendNotificationPage'
+import TestRefreshTokenPage from "pages/TestRefreshTokenPage";
+import UsersWalletsPage from "pages/Blockchain/Tron/UsersWalletsPage";
+import Notifications from "pages/Notifications";
+import SendNotificationPage from "pages/SendNotificationPage";
 // import SendPushNotificationPage from "pages/SendPushNotificationPage";
-import WithdrawUSDTPage from 'pages/Withdrawals/WithdrawUSDTPage'
-import FinancialDashboard from 'pages/Dashboards/FinancialDashboard'
-import CartModal from 'pages/CartModal/CartModal'
-import UserManagement from 'pages/UserManagement'
+import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
+import FinancialDashboard from "pages/Dashboards/FinancialDashboard";
+import CartModal from "pages/CartModal/CartModal";
+import UserManagement from "pages/UserManagement";
 
 // Route configurations
 export const publicRoutes = [
   {
-    path: '/',
+    path: "/",
     element: <LoginPage />,
   },
   {
-    path: '/login',
+    path: "/login",
     element: <LoginPage />,
   },
   {
-    path: '/unauthorized',
+    path: "/unauthorized",
     element: <UnauthorizedPage />,
   },
   {
-    path: '/Notifications',
+    path: "/Notifications",
     element: <Notifications />,
   },
-]
+];
 
 export const protectedRoutes = [
   {
-    path: '/DashboardPage',
+    path: "/DashboardPage",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -71,7 +71,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/dashboard',
+    path: "/dashboard",
     element: (
       <ProtectedRoute>
         <DashboardPage />
@@ -81,7 +81,7 @@ export const protectedRoutes = [
 
   // Dashboard Routes
   {
-    path: '/AdminDashboard',
+    path: "/AdminDashboard",
     element: (
       <ProtectedRoute>
         <AdminDashboard />
@@ -90,7 +90,7 @@ export const protectedRoutes = [
   },
   // User Management Routes
   {
-    path: '/addnewuser',
+    path: "/addnewuser",
     element: (
       <ProtectedRoute>
         <CreateUser />
@@ -98,7 +98,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/ProfilePage',
+    path: "/ProfilePage",
     element: (
       <ProtectedRoute>
         <ProfilePage />
@@ -107,7 +107,7 @@ export const protectedRoutes = [
   },
   // Transaction Routes
   {
-    path: '/automatic-transaction',
+    path: "/automatic-transaction",
     element: (
       <ProtectedRoute>
         <AutomaticTransaction />
@@ -115,7 +115,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/suggested-transaction',
+    path: "/suggested-transaction",
     element: (
       <ProtectedRoute>
         <SuggestedTransaction />
@@ -123,7 +123,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/live-transaction',
+    path: "/live-transaction",
     element: (
       <ProtectedRoute>
         <LiveTransaction />
@@ -131,7 +131,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/AllTransactionsPage',
+    path: "/AllTransactionsPage",
     element: (
       <ProtectedRoute>
         <AllTransactionsPage />
@@ -140,7 +140,7 @@ export const protectedRoutes = [
   },
   // Financial Routes
   {
-    path: '/balances',
+    path: "/balances",
     element: (
       <ProtectedRoute>
         <BalancesPage />
@@ -148,7 +148,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/deposit',
+    path: "/deposit",
     element: (
       <ProtectedRoute>
         <DepositPage />
@@ -156,7 +156,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/WithdrawPage',
+    path: "/WithdrawPage",
     element: (
       <ProtectedRoute>
         <WithdrawPage />
@@ -164,7 +164,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/AllWithdrawalsPage',
+    path: "/AllWithdrawalsPage",
     element: (
       <ProtectedRoute>
         <AllWithdrawalsPage />
@@ -172,7 +172,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/exchange-prices',
+    path: "/exchange-prices",
     element: (
       <ProtectedRoute>
         <ExchangePrices />
@@ -180,7 +180,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/JibitPage',
+    path: "/JibitPage",
     element: (
       <ProtectedRoute>
         <JibitPage />
@@ -189,7 +189,7 @@ export const protectedRoutes = [
   },
   // Admin Management Routes
   {
-    path: '/RolesPermissionsManager',
+    path: "/RolesPermissionsManager",
     element: (
       <ProtectedRoute>
         <RolesPermissionsManager />
@@ -197,7 +197,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/PageManager',
+    path: "/PageManager",
     element: (
       <ProtectedRoute>
         <PageManager />
@@ -205,7 +205,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/RoleManagement',
+    path: "/RoleManagement",
     element: (
       <ProtectedRoute>
         <RoleManagement />
@@ -213,7 +213,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/PermissionManagement',
+    path: "/PermissionManagement",
     element: (
       <ProtectedRoute>
         <PermissionManagement />
@@ -221,7 +221,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/TestRefreshTokenPage',
+    path: "/TestRefreshTokenPage",
     element: (
       <ProtectedRoute>
         <TestRefreshTokenPage />
@@ -229,7 +229,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/UsersWalletsPage',
+    path: "/UsersWalletsPage",
     element: (
       <ProtectedRoute>
         <UsersWalletsPage />
@@ -237,7 +237,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/SendNotificationPage',
+    path: "/SendNotificationPage",
     element: (
       <ProtectedRoute>
         <SendNotificationPage />
@@ -253,7 +253,7 @@ export const protectedRoutes = [
   //   ),
   // },
   {
-    path: '/WithdrawUSDTPage',
+    path: "/WithdrawUSDTPage",
     element: (
       <ProtectedRoute>
         <WithdrawUSDTPage />
@@ -261,7 +261,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/FinancialDashboard',
+    path: "/FinancialDashboard",
     element: (
       <ProtectedRoute>
         <FinancialDashboard />
@@ -269,7 +269,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/UserRoleManagement',
+    path: "/UserRoleManagement",
     element: (
       <ProtectedRoute>
         <UserRoleManagement />
@@ -277,7 +277,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/CartModal',
+    path: "/CartModal",
     element: (
       <ProtectedRoute>
         <CartModal />
@@ -285,7 +285,7 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/UserManagement',
+    path: "/UserManagement",
     element: (
       <ProtectedRoute>
         <UserManagement />
@@ -293,11 +293,11 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: '/Transaction',
+    path: "/Transaction",
     element: (
       <ProtectedRoute>
         <Transaction />
       </ProtectedRoute>
     ),
   },
-]
+];

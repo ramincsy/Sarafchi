@@ -9,7 +9,9 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
+import "assets/styles/AdvancedTable.css";
 import * as XLSX from "xlsx";
+
 import AdvancedTableDesktopView from "./AdvancedTableDesktopView";
 import AdvancedTableMobileView from "./AdvancedTableMobileView";
 
@@ -178,7 +180,10 @@ const AdvancedTable = ({
   };
 
   return (
-    <Paper sx={{ width: "100%", p: 2, overflowX: "auto" }}>
+    <Paper
+      className="advanced-table-container"
+      sx={{ width: "100%", p: 2, overflowX: "auto" }}
+    >
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
