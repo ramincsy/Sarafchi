@@ -32,7 +32,7 @@ from push_notification_manager import push_notification_bp  # تغییر این 
 from usdt_withdrawals_routes import usdt_withdrawals_bp
 from FinancialDashboard import financial_dashboard_bp
 from Iran_DateTime import get_iran_time
-
+from user_financial_ops_routes import user_financial_bp
 build_folder = r'C:\inetpub\wwwroot\sarafchi'
 
 app = Flask(__name__, static_folder=build_folder, static_url_path='')
@@ -78,6 +78,7 @@ app.register_blueprint(notifications_bp, url_prefix="/api")
 app.register_blueprint(push_notification_bp, url_prefix="/api/push")
 app.register_blueprint(usdt_withdrawals_bp)
 app.register_blueprint(financial_dashboard_bp)
+app.register_blueprint(user_financial_bp, url_prefix='/api')
 
 @app.route('/test-db-connection', methods=['GET'])
 def test_db_connection():

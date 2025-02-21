@@ -162,6 +162,16 @@ const groupedMenuItems = [
         icon: <SwapIcon />,
         path: "/UsersWalletsPage",
       },
+      {
+        text: "ManageUserFinancial",
+        icon: <SwapIcon />,
+        path: "/ManageUserFinancial",
+      },
+      {
+        text: "BalanceEquality",
+        icon: <SwapIcon />,
+        path: "/BalanceEquality",
+      },
     ],
   },
 ];

@@ -40,7 +40,8 @@ import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
 import FinancialDashboard from "pages/Dashboards/FinancialDashboard";
 import CartModal from "pages/CartModal/CartModal";
 import UserManagement from "pages/UserManagement";
-
+import BalanceEquality from "pages/BalanceEquality";
+import ManageUserFinancial from "pages/ManagePartnersBanks/ManageUserFinancial";
 // Route configurations
 export const publicRoutes = [
   {
@@ -297,6 +298,22 @@ export const protectedRoutes = [
     element: (
       <ProtectedRoute>
         <Transaction />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/BalanceEquality",
+    element: (
+      <ProtectedRoute>
+        <BalanceEquality />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/ManageUserFinancial",
+    element: (
+      <ProtectedRoute>
+        <ManageUserFinancial />
       </ProtectedRoute>
     ),
   },
