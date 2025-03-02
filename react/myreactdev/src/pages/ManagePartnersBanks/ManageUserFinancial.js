@@ -12,15 +12,20 @@ import {
   Alert,
 } from "@mui/material";
 
-import UserService from "services/UserService"; // سرویس کاربران
-import FinancialOpsService from "services/FinancialOpsService"; // سرویس عملیات مالی
+import UserService from "services/UserService";
+import FinancialOpsService from "services/FinancialOpsService";
 
 function ManageUserFinancial() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const [operations, setOperations] = useState([]); // لیست تاریخچه عملیات
-  const [lastStatus, setLastStatus] = useState(null); // آخرین وضعیت کاربر
+  // انتخاب ارز
+  const [currency, setCurrency] = useState("Toman"); // پیشفرض IRR
+  // اگر دوست دارید لیست ارزها را ثابت تعریف کنید یا از API بگیرید
+  const currencyList = ["Toman", "USD", "USDT", "EUR"];
+
+  const [operations, setOperations] = useState([]);
+  const [lastStatus, setLastStatus] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -46,7 +51,7 @@ function ManageUserFinancial() {
     }
   };
 
-  // وقتی یک کاربر انتخاب می‌شود:
+  // وقتی کاربر را عوض کردیم
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
     setErrorMsg("");
@@ -61,23 +66,34 @@ function ManageUserFinancial() {
       return;
     }
 
-    // دریافت آخرین وضعیت و تاریخچه:
-    fetchLastStatus(user.ID);
-    fetchOperations(user.ID);
+    // دریافت آخرین وضعیت و تاریخچه برای این کاربر + ارز انتخابی
+    fetchLastStatus(user.ID, currency);
+    fetchOperations(user.ID, currency);
   };
 
-  const fetchLastStatus = async (userId) => {
+  // تغییر ارز
+  const handleSelectCurrency = async (newCurrency) => {
+    setCurrency(newCurrency);
+
+    // اگر کاربر هم انتخاب شده باشد، داده‌ها را رفرش می‌کنیم
+    if (selectedUser) {
+      fetchLastStatus(selectedUser.ID, newCurrency);
+      fetchOperations(selectedUser.ID, newCurrency);
+    }
+  };
+
+  const fetchLastStatus = async (userId, cur) => {
     try {
-      const status = await FinancialOpsService.fetchLastStatus(userId);
+      const status = await FinancialOpsService.fetchLastStatus(userId, cur);
       setLastStatus(status);
     } catch (err) {
       setLastStatus(null);
     }
   };
 
-  const fetchOperations = async (userId) => {
+  const fetchOperations = async (userId, cur) => {
     try {
-      const ops = await FinancialOpsService.fetchOperations(userId);
+      const ops = await FinancialOpsService.fetchOperations(userId, cur);
       setOperations(ops);
     } catch (error) {
       setErrorMsg("خطا در دریافت تاریخچه مالی");
@@ -94,18 +110,20 @@ function ManageUserFinancial() {
     setSuccessMsg("");
 
     try {
+      // در این جا currency_type را هم ارسال می‌کنیم
       await FinancialOpsService.addOperation({
         user_id: selectedUser.ID,
+        currency_type: currency, // ارز انتخاب‌شده
         operation_type: operationType,
         amount: parseFloat(amount),
         reason: reason,
-        update_source: "Manual", // یا "API"
-        updated_by: 1, // شناسه کاربری؛ در پروژه واقعی از توکن خوانده شود
+        update_source: "Manual",
+        updated_by: 1, // در سیستم واقعی از توکن می‌گیرید
       });
       setSuccessMsg("عملیات با موفقیت ثبت شد");
-      // رفرش لیست
-      fetchOperations(selectedUser.ID);
-      fetchLastStatus(selectedUser.ID);
+      // رفرش لیست و وضعیت
+      fetchOperations(selectedUser.ID, currency);
+      fetchLastStatus(selectedUser.ID, currency);
       // خالی‌کردن فرم
       setAmount("");
       setReason("");
@@ -123,13 +141,13 @@ function ManageUserFinancial() {
 
     try {
       await FinancialOpsService.revertOperation(op.OperationID, {
-        reverted_by: 2, // شناسه کاربری که ریورت می‌کند
+        reverted_by: 2,
         reason: "بازگشت به درخواست ادمین",
       });
       setSuccessMsg(`عملیات ${op.OperationID} بازگردانی شد`);
       if (selectedUser) {
-        fetchLastStatus(selectedUser.ID);
-        fetchOperations(selectedUser.ID);
+        fetchLastStatus(selectedUser.ID, currency);
+        fetchOperations(selectedUser.ID, currency);
       }
     } catch (err) {
       console.error(err);
@@ -142,9 +160,8 @@ function ManageUserFinancial() {
     setSuccessMsg("");
     try {
       const result = await FinancialOpsService.clearAllOperations();
-      // پاسخ شامل: {"message": "..."}
       setSuccessMsg(result.message || "تمام رکوردها حذف شدند.");
-      // سپس وضعیت آخرین عملیات و لیست را خالی می‌کنیم
+      // وضعیت و لیست را خالی کنیم
       setLastStatus(null);
       setOperations([]);
     } catch (err) {
@@ -169,7 +186,9 @@ function ManageUserFinancial() {
             پاک‌کردن همه عملیات
           </Button>
 
-          <Typography variant="h6">انتخاب کاربر:</Typography>
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            انتخاب کاربر:
+          </Typography>
           <Select
             size="small"
             value={selectedUser ? selectedUser.ID : ""}
@@ -189,6 +208,22 @@ function ManageUserFinancial() {
               </MenuItem>
             ))}
           </Select>
+
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            انتخاب ارز:
+          </Typography>
+          <Select
+            size="small"
+            value={currency}
+            onChange={(e) => handleSelectCurrency(e.target.value)}
+            sx={{ minWidth: 200, mt: 1 }}
+          >
+            {currencyList.map((cur) => (
+              <MenuItem key={cur} value={cur}>
+                {cur}
+              </MenuItem>
+            ))}
+          </Select>
         </Box>
 
         {/* نمایش آخرین وضعیت مالی */}
@@ -197,7 +232,7 @@ function ManageUserFinancial() {
             <Typography variant="h6">آخرین وضعیت مالی:</Typography>
             {lastStatus ? (
               <Box sx={{ mt: 1 }}>
-                <Typography>موجودی: {lastStatus.Balance} تومان</Typography>
+                <Typography>موجودی: {lastStatus.Balance}</Typography>
                 <Typography>
                   موجودی قابل برداشت: {lastStatus.WithdrawableBalance}
                 </Typography>
@@ -205,10 +240,7 @@ function ManageUserFinancial() {
                 <Typography>بستانکاری: {lastStatus.Credit}</Typography>
                 <Typography>وام فعلی: {lastStatus.LoanAmount}</Typography>
 
-                {/* اگر خواستید مقدار Amount آخرین عملیات را هم نشان دهید: */}
-                {/* <Typography>Amount آخرین عملیات: {lastStatus.Amount}</Typography> */}
-
-                {/* نمایش کل وام پرداخت‌شده و بازپرداخت‌شده */}
+                {/* نمایش کل وام پرداخت‌شده / بازپرداخت‌شده */}
                 {typeof lastStatus.totalLoanGiven !== "undefined" && (
                   <>
                     <Typography>
@@ -279,7 +311,7 @@ function ManageUserFinancial() {
               <tr style={{ textAlign: "left" }}>
                 <th>OperationID</th>
                 <th>نوع عملیات</th>
-                <th>Amount</th> {/* ستون جدید */}
+                <th>Amount</th>
                 <th>موجودی</th>
                 <th>برداشتنی</th>
                 <th>بدهی</th>
@@ -298,7 +330,7 @@ function ManageUserFinancial() {
                 >
                   <td>{op.OperationID}</td>
                   <td>{op.OperationType}</td>
-                  <td>{op.Amount}</td> {/* نمایش ستون Amount */}
+                  <td>{op.Amount}</td>
                   <td>{op.Balance}</td>
                   <td>{op.WithdrawableBalance}</td>
                   <td>{op.Debt}</td>

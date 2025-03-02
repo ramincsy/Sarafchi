@@ -1,58 +1,46 @@
-from flask import Blueprint, jsonify  # type: ignore
+# balances_routes.py
+from flask import Blueprint, jsonify
 from user_models import db
-from sqlalchemy import text  # type: ignore
+from sqlalchemy import text
 
 balances_bp = Blueprint('balances_bp', __name__)
-
 
 @balances_bp.route('/balances/<int:user_id>', methods=['GET'])
 def get_user_balances(user_id):
     try:
-        # فراخوانی استور پروسیجر
+        # اجرای استور پروسیجر spGetUserBalances
         result = db.session.execute(
             text("EXEC spGetUserBalances @UserID = :uid"),
             {"uid": user_id}
         )
         rows = result.fetchall()
 
-        # متغیرها برای جمع‌آوری اطلاعات کلی
-        total_net_balance = 0
-        total_withdrawable_balance = 0
-        total_locked_balance = 0
-
-        # ساختار داده‌ها
-        balances = []
+        # لیست نهایی شامل داده‌های خام هر ارز
+        balances_list = []
         for row in rows:
-            net_balance = float(row.NetBalance)
-            withdrawable_balance = float(row.WithdrawableBalance)
-            locked_balance = float(row.LockedBalance)
-
-            # اضافه کردن اطلاعات به ساختار کلی
-            total_net_balance += net_balance
-            total_withdrawable_balance += withdrawable_balance
-            total_locked_balance += locked_balance
-
-            # جزئیات هر ارز
-            balances.append({
+            # اگر همه ستون‌ها وجود داشته باشد، آنها را در خروجی قرار می‌دهیم
+            balances_list.append({
+                "UserID": row.UserID,
                 "CurrencyType": row.CurrencyType,
-                "Debit": float(row.Debit),
+                "Balance": float(row.Balance),
+                "WithdrawableBalance": float(row.WithdrawableBalance),
+                "Debt": float(row.Debt),
                 "Credit": float(row.Credit),
-                "NetBalance": net_balance,
-                "WithdrawableBalance": withdrawable_balance,
-                "LockedBalance": locked_balance,
-                "LoanBalance": float(row.LoanBalance),
-                "LastUpdatedBalance": row.LastUpdatedBalance.isoformat(),
+                "LoanAmount": float(row.LoanAmount),
+                "LockedBalance": float(row.LockedBalance),
+                # اگر LastUpdatedBalance نال نباشد آن را در قالب ISO8601 برمی‌گردانیم
+                "LastUpdatedBalance": (
+                    row.LastUpdatedBalance.isoformat() 
+                    if row.LastUpdatedBalance else None
+                )
             })
 
-        # بازگرداندن اطلاعات
+        # اینجا نیازی به summary یا محاسبه نیست، پس فقط balances را برمی‌گردانیم
         return jsonify({
             "success": True,
-            "summary": {
-                "total_net_balance": total_net_balance,
-                "total_withdrawable_balance": total_withdrawable_balance,
-                "total_locked_balance": total_locked_balance
-            },
-            "balances": balances
+            "balances": balances_list
         }), 200
+
     except Exception as e:
+        # درصورت خطا، پیام را در خروجی می‌فرستیم
         return jsonify({"success": False, "error": str(e)}), 500

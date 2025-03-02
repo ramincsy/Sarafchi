@@ -42,14 +42,15 @@ const SubHeader = () => {
     try {
       setIsLoading(true);
       const data = await ApiManager.BalancesService.fetchBalances(uid);
+      console.log("Fetched Balances Data:", data); // اضافه کردن این خط برای دیباگ
       if (data.success && Array.isArray(data.balances)) {
         setBalances({
           USDT:
             data.balances.find((item) => item.CurrencyType === "USDT")
-              ?.NetBalance || 0,
+              ?.WithdrawableBalance || 0, // استفاده از WithdrawableBalance
           Toman:
             data.balances.find((item) => item.CurrencyType === "Toman")
-              ?.NetBalance || 0,
+              ?.WithdrawableBalance || 0, // استفاده از WithdrawableBalance
         });
       } else {
         setError("خطا در دریافت موجودی‌ها.");

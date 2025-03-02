@@ -1,8 +1,9 @@
-import React from 'react'
-import Transaction from './Transaction' // مسیر فایل Transaction.js را بررسی کنید
+// SuggestedTransaction.js
+import React from "react";
+import TransactionPage from "./TransactionPage";
 
-const AutomaticTransaction = () => {
-  return <Transaction mode='suggested' />
-}
+const SuggestedTransaction = () => {
+  return <TransactionPage defaultMode="suggested" />;
+};
 
-export default AutomaticTransaction
+export default SuggestedTransaction;

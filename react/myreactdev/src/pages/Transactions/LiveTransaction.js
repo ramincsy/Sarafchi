@@ -1,8 +1,8 @@
-import React from 'react'
-import Transaction from './Transaction' // مسیر فایل Transaction.js را بررسی کنید
+import React from "react";
+import TransactionPage from "./TransactionPage";
 
-const AutomaticTransaction = () => {
-  return <Transaction mode='live' />
-}
+const LiveTransaction = () => {
+  return <TransactionPage defaultMode="live" />;
+};
 
-export default AutomaticTransaction
+export default LiveTransaction;

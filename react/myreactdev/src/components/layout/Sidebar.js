@@ -172,6 +172,11 @@ const groupedMenuItems = [
         icon: <SwapIcon />,
         path: "/BalanceEquality",
       },
+      {
+        text: "TransactionPage",
+        icon: <SwapIcon />,
+        path: "/TransactionPage",
+      },
     ],
   },
 ];

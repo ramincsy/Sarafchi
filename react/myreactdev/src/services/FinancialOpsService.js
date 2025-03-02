@@ -3,15 +3,27 @@ import axiosInstance from "utils/axiosInstance";
 
 const FinancialOpsService = {
   /**
-   * لیست یا تاریخچه عملیات مالی (با امکان فیلتر بر اساس userId)
-   * GET /financialOps?userId={userId}
+   * لیست یا تاریخچه عملیات مالی (با امکان فیلتر بر اساس userId و currency)
+   * GET /financialOps?userId={userId}&currency={currencyType}
+   * - userId: عدد شناسه کاربر (مثلاً 4096)
+   * - currency: اختیاری (مثلاً 'IRR', 'USDT', ...)
    */
-  fetchOperations: async (userId) => {
+  fetchOperations: async (userId, currency) => {
     try {
       let url = "/financialOps";
+      const params = [];
+
       if (userId) {
-        url += `?userId=${userId}`;
+        params.push(`userId=${userId}`);
       }
+      if (currency) {
+        params.push(`currency=${currency}`);
+      }
+
+      if (params.length > 0) {
+        url += "?" + params.join("&");
+      }
+
       const response = await axiosInstance.get(url);
       return response.data; // آرایه‌ای از رکوردهای عملیات
     } catch (error) {
@@ -24,18 +36,24 @@ const FinancialOpsService = {
 
   /**
    * آخرین وضعیت مالی کاربر به‌همراه totalLoanGiven و totalLoanRepaid
-   * GET /financialOps/lastStatus/:userId
+   * GET /financialOps/lastStatus/:userId?currency=...
+   * - userId: شناسه کاربر
+   * - currency: اختیاری (نام ارز)
    */
-  fetchLastStatus: async (userId) => {
+  fetchLastStatus: async (userId, currency) => {
     try {
-      const response = await axiosInstance.get(
-        `/financialOps/lastStatus/${userId}`
-      );
-      // می‌تواند شامل:
+      let url = `/financialOps/lastStatus/${userId}`;
+      if (currency) {
+        url += `?currency=${currency}`;
+      }
+
+      const response = await axiosInstance.get(url);
+      // پاسخ می‌تواند شامل:
       // {
-      //   OperationID, Balance, WithdrawableBalance, Debt, Credit, LoanAmount,
-      //   Amount, OperationType, LastUpdated,
-      //   totalLoanGiven, totalLoanRepaid
+      //   OperationID, CurrencyType, Balance, WithdrawableBalance,
+      //   Debt, Credit, LoanAmount, Amount, OperationType,
+      //   totalLoanGiven, totalLoanRepaid,
+      //   ...
       // }
       return response.data;
     } catch (error) {
@@ -47,12 +65,23 @@ const FinancialOpsService = {
   /**
    * ایجاد/افزودن عملیات مالی جدید (Charge, Withdraw, Loan, LoanRepayment, ...)
    * POST /financialOps
-   * پارامتر operationPayload = {
-   *   user_id, operation_type, amount, reason, update_source, updated_by
+   * بدنهٔ درخواست (operationPayload) = {
+   *   user_id,          // number
+   *   currency_type,    // string (مثلاً 'IRR', 'USDT')
+   *   operation_type,   // string (Charge, Withdraw, ...)
+   *   amount,           // number
+   *   reason,           // string
+   *   update_source,    // string
+   *   updated_by        // number
    * }
    */
   addOperation: async (operationPayload) => {
     try {
+      // در صورت نبود currency_type، می‌توانید در همین جا مقدار پیش‌فرض بگذارید
+      if (!operationPayload.currency_type) {
+        operationPayload.currency_type = "IRR";
+      }
+
       const response = await axiosInstance.post(
         "/financialOps",
         operationPayload
@@ -67,10 +96,7 @@ const FinancialOpsService = {
   /**
    * بازگردانی (Revert) یک عملیات
    * POST /financialOps/revert/:operationId
-   * بدنه:
-   * {
-   *   reverted_by, reason
-   * }
+   * بدنه: { reverted_by, reason }
    */
   revertOperation: async (operationId, revertPayload) => {
     try {
@@ -86,6 +112,11 @@ const FinancialOpsService = {
       );
     }
   },
+
+  /**
+   * پاک کردن همهٔ رکوردهای جدول UserFinancialOperations
+   * DELETE /financialOps/clear
+   */
   clearAllOperations: async () => {
     try {
       const response = await axiosInstance.delete("/financialOps/clear");
