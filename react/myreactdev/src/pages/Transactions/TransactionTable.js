@@ -18,7 +18,8 @@ const TransactionTable = () => {
     try {
       const data = await ApiManager.TransactionsService.fetchTransactions();
       return data.map((transaction, index) => ({
-        WithdrawalID: transaction.TransactionID || index,
+        TransactionID: transaction.TransactionID || index,
+        TransactionType: transaction.TransactionType || index,
         UserID: transaction.UserID,
         Amount: transaction.Quantity,
         Currency: transaction.CurrencyType,
@@ -36,7 +37,8 @@ const TransactionTable = () => {
   // ستون‌های جدول
   const columns = useMemo(
     () => [
-      { field: "WithdrawalID", label: "شناسه" },
+      { field: "TransactionID", label: "شناسه" },
+      { field: "TransactionType", label: "نوع معامله" },
       { field: "UserID", label: "کاربر" },
       { field: "Amount", label: "مقدار" },
       { field: "Currency", label: "ارز" },

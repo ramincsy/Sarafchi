@@ -24,7 +24,6 @@ import UserService from "services/UserService";
 import {
   Home as HomeIcon,
   People as PeopleIcon,
-  AccountBalanceWallet as WalletIcon,
   Dashboard as DashboardIcon,
   ExitToApp as ExitToAppIcon,
   Pageview as PageviewIcon,
@@ -33,7 +32,20 @@ import {
   SwapHoriz as SwapIcon,
   ExpandMore as ExpandMoreIcon,
   Search as SearchIcon,
+  CreditCard as CreditCardIcon,
+  EventNote as EventNoteIcon,
+  Shield as ShieldIcon,
+  Settings as SettingsIcon,
+  Payment as PaymentIcon,
+  ImportExport as ImportExportIcon,
+  Notifications as NotificationsIcon,
+  PriceChange as PriceChangeIcon,
+  Assessment as AssessmentIcon,
+  Equalizer as EqualizerIcon,
+  Login as LoginIcon,
+  Block as BlockIcon,
 } from "@mui/icons-material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CircleNotificationsIcon from "@mui/icons-material/CircleNotifications";
 import SendIcon from "@mui/icons-material/Send";
 
@@ -48,13 +60,13 @@ const groupedMenuItems = [
         path: "/AdminDashboard",
       },
       {
-        text: "داشبورد مدیریت مالی",
-        icon: <HomeIcon />,
+        text: "داشبورد مالی",
+        icon: <AssessmentIcon />,
         path: "/FinancialDashboard",
       },
       {
-        text: "مدیریت معاملات",
-        icon: <HomeIcon />,
+        text: "داشبورد رویدادها",
+        icon: <EventNoteIcon />,
         path: "/CartModal",
       },
     ],
@@ -62,12 +74,17 @@ const groupedMenuItems = [
   {
     title: "مدیریت کاربران",
     items: [
-      { text: "مدیریت کاربر", icon: <PeopleIcon />, path: "/addnewuser" },
-      { text: "پروفایل", icon: <SwapIcon />, path: "/ProfilePage" },
+      { text: "مدیریت کاربران", icon: <PeopleIcon />, path: "/addnewuser" },
+      { text: "پروفایل", icon: <ManageAccountsIcon />, path: "/profilePage" },
+      {
+        text: "مدیریت محدودیت‌های کاربران",
+        icon: <BlockIcon />,
+        path: "/UserManagement",
+      },
     ],
   },
   {
-    title: "تراکنش‌ها",
+    title: "معاملات",
     items: [
       {
         text: "معامله اتوماتیک",
@@ -79,25 +96,62 @@ const groupedMenuItems = [
         icon: <MoneyIcon />,
         path: "/suggested-transaction",
       },
-      { text: "معامله روی خط", icon: <SwapIcon />, path: "/live-transaction" },
-      { text: "معاملات کلی", icon: <SwapIcon />, path: "/AllTransactionsPage" },
+      {
+        text: "معاملات فردایی",
+        icon: <ImportExportIcon />,
+        path: "/live-transaction",
+      },
+      {
+        text: "معامله‌گری",
+        icon: <PriceChangeIcon />,
+        path: "/BuySellPage",
+      },
+      {
+        text: "تمام معاملات",
+        icon: <AssessmentIcon />,
+        path: "/AllTransactionsPage",
+      },
+      {
+        text: "معاملات",
+        icon: <SwapIcon />,
+        path: "/Transaction",
+      },
     ],
   },
   {
-    title: "مالی",
+    title: "امور مالی",
     items: [
-      { text: "موجودی", icon: <WalletIcon />, path: "/balances" },
+      {
+        text: "موجودی‌ها",
+        icon: <AccountBalanceWalletIcon />,
+        path: "/balances",
+      },
       { text: "واریز", icon: <MoneyIcon />, path: "/deposit" },
-      { text: "برداشت‌ها", icon: <ExitToAppIcon />, path: "/WithdrawPage" },
+      { text: "برداشت ریالی", icon: <ExitToAppIcon />, path: "/WithdrawPage" },
       {
         text: "برداشت‌های کلی",
-        icon: <ExitToAppIcon />,
+        icon: <PaymentIcon />,
         path: "/AllWithdrawalsPage",
       },
       {
-        text: "برداشت USDT",
+        text: "درخواست برداشت USDT",
         icon: <ExitToAppIcon />,
         path: "/WithdrawUSDTPage",
+      },
+      {
+        text: "کیف پول‌های کاربران (USDT)",
+        icon: <AccountBalanceWalletIcon />,
+        path: "/UsersWalletsPage",
+      },
+      {
+        text: "شارژ دستی",
+        icon: <PaymentIcon />,
+        path: "/ManageUserFinancial",
+      },
+      {
+        text: "سیستم برابری (مدیریتی)",
+        icon: <EqualizerIcon />,
+        path: "/EqualityCheckPage",
       },
     ],
   },
@@ -105,11 +159,15 @@ const groupedMenuItems = [
     title: "مدیریت سیستم",
     items: [
       {
-        text: "مدیریت نقش‌ها و مجوزها",
-        icon: <ManageAccountsIcon />,
+        text: "مدیریت نقش‌ها و مجوزهای کاربران",
+        icon: <ShieldIcon />,
         path: "/RolesPermissionsManager",
       },
-      { text: "مدیریت صفحات", icon: <PageviewIcon />, path: "/PageManager" },
+      {
+        text: "مدیریت صفحه‌ها",
+        icon: <PageviewIcon />,
+        path: "/PageManager",
+      },
       {
         text: "مدیریت نقش‌ها",
         icon: <ManageAccountsIcon />,
@@ -117,13 +175,18 @@ const groupedMenuItems = [
       },
       {
         text: "مدیریت مجوزها",
-        icon: <ManageAccountsIcon />,
+        icon: <ShieldIcon />,
         path: "/PermissionManagement",
       },
       {
         text: "مدیریت نقش‌های کاربران",
         icon: <ManageAccountsIcon />,
         path: "/UserRoleManagement",
+      },
+      {
+        text: "مدیریت توکن",
+        icon: <SettingsIcon />,
+        path: "/TokenManagerPage",
       },
     ],
   },
@@ -148,34 +211,37 @@ const groupedMenuItems = [
     ],
   },
   {
+    title: "خدمات و استعلام‌ها",
+    items: [
+      {
+        text: "قیمت صرافی‌ها",
+        icon: <MoneyIcon />,
+        path: "/exchange-prices",
+      },
+      {
+        text: "استعلام جیبیت",
+        icon: <CreditCardIcon />,
+        path: "/JibitPage",
+      },
+    ],
+  },
+  {
     title: "سایر",
     items: [
-      { text: "قیمت صرافی‌ها", icon: <MoneyIcon />, path: "/exchange-prices" },
-      { text: "استعلام کارت شبا", icon: <PageviewIcon />, path: "/JibitPage" },
       {
-        text: "TestRefreshTokenPage",
-        icon: <SwapIcon />,
+        text: "تست رفرش توکن",
+        icon: <SettingsIcon />,
         path: "/TestRefreshTokenPage",
       },
       {
-        text: "UsersWalletsPage",
-        icon: <SwapIcon />,
-        path: "/UsersWalletsPage",
+        text: "ورود",
+        icon: <LoginIcon />,
+        path: "/login",
       },
       {
-        text: "ManageUserFinancial",
-        icon: <SwapIcon />,
-        path: "/ManageUserFinancial",
-      },
-      {
-        text: "BalanceEquality",
-        icon: <SwapIcon />,
-        path: "/BalanceEquality",
-      },
-      {
-        text: "TransactionPage",
-        icon: <SwapIcon />,
-        path: "/TransactionPage",
+        text: "دسترسی غیرمجاز",
+        icon: <BlockIcon />,
+        path: "/unauthorized",
       },
     ],
   },
@@ -223,13 +289,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   return (
     <Drawer
-      anchor="left"
+      anchor="left" // تغییر به راست برای پشتیبانی بهتر از زبان فارسی
       open={isOpen}
       onClose={toggleSidebar}
       variant="temporary"
       PaperProps={{
         sx: {
-          width: isMobile ? "80%" : 260,
+          width: isMobile ? "80%" : 280,
           background: "rgba(255, 255, 255, 0.45)",
           backdropFilter: "blur(5px)",
           border: "1px solid rgba(255,255,255,0.2)",
@@ -237,6 +303,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           color: theme.palette.text.primary,
           boxShadow: "0px 4px 10px rgba(0,0,0,0.25)",
           transition: "transform 0.3s ease-in-out",
+          direction: "rtl", // اضافه کردن جهت RTL برای فارسی
         },
       }}
     >
@@ -284,14 +351,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           InputProps={{
             startAdornment: <SearchIcon sx={{ mr: 1 }} />,
           }}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, direction: "rtl" }}
         />
       </Box>
       {/* منو */}
       <List>
         {filteredMenuItems.map((group) =>
           group.items.length > 0 ? (
-            <Accordion key={group.title} disableGutters elevation={0}>
+            <Accordion
+              key={group.title}
+              disableGutters
+              elevation={0}
+              defaultExpanded={false}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="subtitle1">{group.title}</Typography>
               </AccordionSummary>
@@ -306,17 +378,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         sx={{
                           "&:hover": {
                             backgroundColor: theme.palette.action.hover,
-                            transform: "translateX(5px)",
+                            transform: "translateX(-5px)", // تغییر برای RTL
                             transition: "transform 0.2s ease-in-out",
                           },
                           "&.Mui-selected": {
-                            borderLeft: `4px solid ${theme.palette.primary.main}`,
+                            borderRight: `4px solid ${theme.palette.primary.main}`, // تغییر به راست برای RTL
                             backgroundColor: theme.palette.action.selected,
                           },
                         }}
                       >
                         <ListItemIcon
-                          sx={{ color: theme.palette.text.primary }}
+                          sx={{
+                            color: theme.palette.text.primary,
+                            minWidth: 40,
+                          }}
                         >
                           {item.icon}
                         </ListItemIcon>

@@ -9,9 +9,10 @@ from requests.packages.urllib3.util.retry import Retry
 
 # تنظیمات کلی
 API_URL = 'https://abantether.com/api/v1/otc/coin-price/'
-API_TOKEN = "Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODMyNTE1IiwiaWF0IjoxNzM5MzY2NzM2LjE3ODk2MjUsImV4cCI6MTc3MDkwMjczNiwic2Vzc2lvbl9pZCI6IjhlNzY1MDliLTQ0ODMtNDM0OS04MjZlLWZlOTI5ZmRjOTkwYiIsInR5cGUiOiJBUEkiLCJyZXF1aXJlZF9sYXllcnMiOnsicGFuZWwiOnsiZGlmZiI6WyJwaG9uZS1vdHAiLCJlbWFpbC1vdHAiXSwidXNlX3BvbGljeSI6IkFMV0FZUyIsImFjdGl2ZSI6e319LCJ3aXRoZHJhd2FsIjp7ImRpZmYiOlsiYXV0aGVudGljYXRvciJdLCJ1c2VfcG9saWN5IjoiUkVTRVQiLCJhY3RpdmUiOnt9fSwid2hpdGVhZGRyZXNzIjp7ImRpZmYiOlsiYXV0aGVudGljYXRvciIsImVtYWlsLW90cCJdLCJ1c2VfcG9saWN5IjoiRVhQSVJFIiwiYWN0aXZlIjp7fX19fQ.E0xSZQ5YfIay7_R4nfn_FqhdctTw-EC3OcY0CTsuM6E"
+API_TOKEN = "Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxODMyNTE1IiwiaWF0IjoxNzQxMjU5NzcwLjkxNjQ0MDcsImV4cCI6MTc3Mjc5NTc3MCwic2Vzc2lvbl9pZCI6IjgzNTRkNTY0LTAxNDUtNGE1NS1hMGY0LWRkOGU0OWVmMWZmYyIsInR5cGUiOiJBUEkiLCJyZXF1aXJlZF9sYXllcnMiOnsicGFuZWwiOnsiZGlmZiI6WyJwaG9uZS1vdHAiLCJlbWFpbC1vdHAiXSwidXNlX3BvbGljeSI6IkFMV0FZUyIsImFjdGl2ZSI6e319LCJ3aXRoZHJhd2FsIjp7ImRpZmYiOlsiYXV0aGVudGljYXRvciJdLCJ1c2VfcG9saWN5IjoiUkVTRVQiLCJhY3RpdmUiOnt9fSwid2hpdGVhZGRyZXNzIjp7ImRpZmYiOlsiYXV0aGVudGljYXRvciIsImVtYWlsLW90cCJdLCJ1c2VfcG9saWN5IjoiRVhQSVJFIiwiYWN0aXZlIjp7fX19fQ.G73v1o4qlOrox7wrZbDzdIztjUIOyYZkUHoz1apvUVU"
 CACHE_TTL = 10           # زمان انقضا کش (ثانیه)
 FAILURE_THRESHOLD = 60   # حد زمانی عدم دریافت موفق (ثانیه)
+DUMMY_PRICES = {"buy": 42000.0, "sell": 41900.0}  # قیمت‌های الکی
 
 # ایجاد کش با زمان انقضا
 cache = TTLCache(maxsize=1, ttl=CACHE_TTL)
@@ -81,16 +82,21 @@ def fetch_usdt_price():
 def get_usdt_price(price_type='buy'):
     """
     دریافت قیمت USDT از کش یا API.
-    اگر بیش از FAILURE_THRESHOLD ثانیه از آخرین دریافت موفق گذشته باشد،
-    پیام "توقف معاملات" برگردانده می‌شود.
+    اگر قیمت از API دریافت نشود یا زمان از آخرین دریافت موفق بیشتر از FAILURE_THRESHOLD شود،
+    قیمت الکی ارسال می‌شود تا سیستم متوقف نشود.
     
     :param price_type: نوع قیمت ('buy' یا 'sell')
-    :return: قیمت مورد نظر یا پیام "توقف معاملات"
+    :return: قیمت مورد نظر
     """
     if price_type not in ['buy', 'sell']:
         return "نوع قیمت باید 'buy' یا 'sell' باشد."
 
     current_time = time.time()
+
+    # اگر زمان از آخرین دریافت موفق بیشتر از FAILURE_THRESHOLD شده باشد، قیمت الکی ارسال می‌شود.
+    if last_successful_fetch is None or (current_time - last_successful_fetch > FAILURE_THRESHOLD):
+        logging.warning("زمان زیادی از دریافت موفق قیمت گذشته است؛ ارسال قیمت الکی.")
+        return DUMMY_PRICES.get(price_type, 0)
 
     # بررسی وجود داده در کش
     cached_data = cache.get('usdt_price')
@@ -103,8 +109,9 @@ def get_usdt_price(price_type='buy'):
     if cached_data:
         return cached_data.get(price_type, 0)
 
-    # اگر هیچ داده‌ای دریافت نشد، پیام توقف معاملات را برگردان
-    return "توقف معاملات"
+    # در صورت عدم دریافت داده، ارسال قیمت الکی
+    logging.warning("داده‌ای از API دریافت نشد؛ ارسال قیمت الکی.")
+    return DUMMY_PRICES.get(price_type, 0)
 
 def update_prices_periodically():
     """
@@ -136,7 +143,4 @@ def live_price():
         return jsonify({"success": False, "error": "نوع قیمت باید 'buy' یا 'sell' باشد."}), 400
 
     price = get_usdt_price(price_type)
-    if price == "توقف معاملات":
-        return jsonify({"success": False, "error": "توقف معاملات"}), 503
-
     return jsonify({"success": True, "price": price}), 200

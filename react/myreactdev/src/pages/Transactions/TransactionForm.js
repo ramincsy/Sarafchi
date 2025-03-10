@@ -1,4 +1,3 @@
-// TransactionForm.js
 import React, {
   useState,
   useEffect,
@@ -22,46 +21,31 @@ import { useTransactionData } from "./useTransactionData";
 import PriceService from "services/PriceService";
 import ApiManager from "services/ApiManager";
 import AuthContext from "contexts/AuthContext";
-
-/**
- * فرم اصلی ثبت معامله (اتوماتیک / پیشنهادی / روی خط)
- * @param {object} props
- *  - mode: "automatic" | "suggested" | "live"
- *  - transactionType: 'sell' یا 'buy' (پیش‌فرض = 'sell')
- *  - currency: نوع ارز (پیش‌فرض 'USDT')
- *  - onSuccess: تابعی که بعد از ثبت موفق معامله اجرا می‌شود (برای رفرش جدول)
- */
-
+import NotificationService from "services/NotificationService"; // اضافه کردن ایمپورت سرویس اعلان
+import { NotificationContext } from "contexts/NotificationContext";
 const TransactionForm = ({
   mode = "automatic",
   transactionType = "sell",
   currency = "USDT",
   onSuccess,
 }) => {
-  // دریافت userId از کانتکست
   const { userInfo } = useContext(AuthContext);
   const userId = userInfo?.UserID;
-  console.log(userId);
 
-  // دریافت قیمت و موجودی با استفاده از هوک
   const { price, usdtBalance } = useTransactionData(userId);
 
   const [quantity, setQuantity] = useState("");
   const [total, setTotal] = useState(null);
   const [manualPrice, setManualPrice] = useState("");
   const [quantityError, setQuantityError] = useState("");
-
-  // وضعیت‌های مربوط به دیالوگ تأیید
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmPrice, setConfirmPrice] = useState(null);
   const [countdown, setCountdown] = useState(10);
-
-  // محاسبه قیمت مؤثر بر اساس حالت (automatic: از API، در غیر این صورت: دستی)
+  const { notifications, setNotifications } = useContext(NotificationContext);
   const effectivePrice = useMemo(() => {
     return mode === "automatic" ? price : manualPrice || price;
   }, [mode, price, manualPrice]);
 
-  // محاسبه مجموع بر اساس تعداد و قیمت مؤثر
   useEffect(() => {
     if (effectivePrice !== null && quantity !== "" && !isNaN(effectivePrice)) {
       setTotal(parseFloat(quantity) * parseFloat(effectivePrice));
@@ -70,13 +54,11 @@ const TransactionForm = ({
     }
   }, [quantity, effectivePrice]);
 
-  // تغییر تعداد (ورودی دستی)
   const handleQuantityChange = useCallback(
     (e) => {
       const value = e.target.value;
       if (!isNaN(value)) {
         const parsedValue = parseFloat(value);
-        // در صورت فروش و انتخاب ارز USDT، موجودی را بررسی می‌کنیم
         if (transactionType === "sell" && currency === "USDT") {
           const currentUSDTBalance = usdtBalance || 0;
           if (parsedValue > currentUSDTBalance) {
@@ -93,7 +75,6 @@ const TransactionForm = ({
     [usdtBalance, transactionType, currency]
   );
 
-  // تغییر تعداد با استفاده از اسلایدر
   const handleSliderQuantityChange = useCallback(
     (calculatedQuantity) => {
       let newQuantity = calculatedQuantity;
@@ -112,7 +93,15 @@ const TransactionForm = ({
     [mode, transactionType, currency, usdtBalance]
   );
 
-  // نهایی‌سازی تراکنش
+  const sendNotification = useCallback(async (notificationData) => {
+    try {
+      await NotificationService.sendNotification(notificationData);
+      console.log("Notification sent successfully");
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  }, []);
+
   const finalizeTransaction = useCallback(async () => {
     const txType =
       mode === "automatic"
@@ -135,6 +124,30 @@ const TransactionForm = ({
     try {
       await ApiManager.TransactionsService.createTransaction(transactionData);
       alert("تراکنش با موفقیت ثبت شد");
+
+      // ارسال اعلان
+      const notificationData = {
+        title: "معامله جدید ",
+        message: `
+          مجموع فروش: ${total} تومان
+        `,
+        type: "transaction",
+        user_id: userId,
+      };
+
+      await sendNotification(notificationData);
+
+      const newNotification = {
+        NotificationID: Date.now(), // یا شناسه دریافتی از سرور
+        Title: notificationData.title,
+        Message: notificationData.message,
+        IsRead: false,
+        Timestamp: new Date().toISOString(),
+        Type: notificationData.type,
+      };
+
+      setNotifications((prev) => [newNotification, ...prev]);
+
       // پاک‌سازی فرم
       setQuantity("");
       setManualPrice("");
@@ -158,11 +171,12 @@ const TransactionForm = ({
     transactionType,
     currency,
     onSuccess,
+    sendNotification,
+    total,
   ]);
 
   const priceThreshold = 0.01;
 
-  // سابمیت فرم
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -214,7 +228,6 @@ const TransactionForm = ({
     ]
   );
 
-  // تعیین برچسب فیلد قیمت بر اساس حالت
   const priceLabel = useMemo(() => {
     if (mode === "automatic") return "قیمت (از API)";
     if (mode === "live") return "قیمت (دستی)";
@@ -249,36 +262,21 @@ const TransactionForm = ({
           <InputLabel sx={{ fontSize: "0.8rem" }}>نوع معامله</InputLabel>
           <Select
             value={transactionType}
-            // در صورت نیاز به تغییر نوع معامله، این قسمت را می‌توان به state تبدیل کرد
             size="small"
             sx={{ fontSize: "0.8rem" }}
           >
             <MenuItem value="sell" sx={{ fontSize: "0.8rem" }}>
               فروش
             </MenuItem>
-            {/*
-              اگر در آینده نیاز به افزودن گزینه خرید باشد:
-              <MenuItem value="buy" sx={{ fontSize: "0.8rem" }}>
-                خرید
-              </MenuItem>
-            */}
           </Select>
         </FormControl>
 
         <FormControl fullWidth margin="dense" size="small">
           <InputLabel sx={{ fontSize: "0.8rem" }}>نوع ارز</InputLabel>
-          <Select
-            value={currency}
-            // در صورت نیاز به تغییر نوع ارز، این قسمت را می‌توان به state تبدیل کرد
-            size="small"
-            sx={{ fontSize: "0.8rem" }}
-          >
+          <Select value={currency} size="small" sx={{ fontSize: "0.8rem" }}>
             <MenuItem value="USDT" sx={{ fontSize: "0.8rem" }}>
               USDT
             </MenuItem>
-            {/*
-              برای ارزهای دیگر، گزینه‌های مناسب را اضافه کنید
-            */}
           </Select>
         </FormControl>
 

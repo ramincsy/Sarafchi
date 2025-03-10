@@ -33,15 +33,17 @@ import UserRoleManagement from "pages/UserRoleManagement";
 
 import TestRefreshTokenPage from "pages/TestRefreshTokenPage";
 import UsersWalletsPage from "pages/Blockchain/Tron/UsersWalletsPage";
-import Notifications from "pages/Notifications";
+
 import SendNotificationPage from "pages/SendNotificationPage";
 // import SendPushNotificationPage from "pages/SendPushNotificationPage";
 import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
 import FinancialDashboard from "pages/Dashboards/FinancialDashboard";
 import CartModal from "pages/CartModal/CartModal";
 import UserManagement from "pages/UserManagement";
-import BalanceEquality from "pages/BalanceEquality";
+
 import ManageUserFinancial from "pages/ManagePartnersBanks/ManageUserFinancial";
+import EqualityCheckPage from "pages/EqualitySystem/EqualityCheckPage";
+import BuySellPage from "pages/EqualitySystem/BuySellPage/BuySellPage";
 // Route configurations
 export const publicRoutes = [
   {
@@ -55,10 +57,6 @@ export const publicRoutes = [
   {
     path: "/unauthorized",
     element: <UnauthorizedPage />,
-  },
-  {
-    path: "/Notifications",
-    element: <Notifications />,
   },
 ];
 
@@ -302,18 +300,26 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: "/BalanceEquality",
-    element: (
-      <ProtectedRoute>
-        <BalanceEquality />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: "/ManageUserFinancial",
     element: (
       <ProtectedRoute>
         <ManageUserFinancial />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/EqualityCheckPage",
+    element: (
+      <ProtectedRoute>
+        <EqualityCheckPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/BuySellPage",
+    element: (
+      <ProtectedRoute>
+        <BuySellPage />
       </ProtectedRoute>
     ),
   },

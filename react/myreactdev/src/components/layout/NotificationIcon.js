@@ -6,31 +6,27 @@ import {
   IconButton,
   Button,
   List,
-  ListItem,
-  ListItemText,
   Divider,
   Snackbar,
   Alert,
   Typography,
   Box,
   useTheme,
-  Fade,
-  Grow,
   Slide,
   Avatar,
-  ListItemAvatar,
   Card,
   CardContent,
   CardActionArea,
-  Paper,
 } from "@mui/material";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive"; // آیکون بهتر
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationService from "services/NotificationService";
 import AuthContext from "contexts/AuthContext";
+import { NotificationContext } from "contexts/NotificationContext";
 
 const NotificationIcon = () => {
   const theme = useTheme();
-  const [notifications, setNotifications] = useState([]);
+  // استفاده از state مشترک اعلان‌ها از context
+  const { notifications, setNotifications } = useContext(NotificationContext);
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -58,7 +54,7 @@ const NotificationIcon = () => {
     } finally {
       setLoading(false);
     }
-  }, [userInfo]);
+  }, [userInfo, setNotifications]);
 
   const markAsRead = useCallback(
     async (notificationIds) => {
@@ -80,7 +76,7 @@ const NotificationIcon = () => {
         setLoading(false);
       }
     },
-    [userInfo]
+    [userInfo, setNotifications]
   );
 
   const handleDeleteNotification = useCallback(
@@ -102,7 +98,7 @@ const NotificationIcon = () => {
         setLoading(false);
       }
     },
-    [userInfo]
+    [userInfo, setNotifications]
   );
 
   const showSnackbar = (message, severity) => {
@@ -136,7 +132,7 @@ const NotificationIcon = () => {
           badgeContent={notifications.filter((n) => !n.IsRead).length}
           color="error"
         >
-          <NotificationsActiveIcon /> {/* آیکون بهتر */}
+          <NotificationsActiveIcon />
         </Badge>
       </IconButton>
 
@@ -148,13 +144,13 @@ const NotificationIcon = () => {
         PaperProps={{
           style: {
             maxHeight: 400,
-            width: 400, // عرض بیشتر برای زیبایی
+            width: 400,
             backgroundColor: theme.palette.background.paper,
-            borderRadius: 12, // گوشه‌های گرد
-            boxShadow: theme.shadows[10], // سایه زیبا
+            borderRadius: 12,
+            boxShadow: theme.shadows[10],
           },
         }}
-        TransitionComponent={Slide} // انیمیشن Slide
+        TransitionComponent={Slide}
       >
         <List>
           {notifications.map((notification) => (
@@ -246,7 +242,6 @@ const NotificationIcon = () => {
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        TransitionComponent={Grow}
       >
         <Alert
           onClose={handleSnackbarClose}

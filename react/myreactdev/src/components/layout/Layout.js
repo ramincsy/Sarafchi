@@ -102,10 +102,12 @@ const Layout = ({ children }) => {
   return (
     <Box sx={styles.root}>
       <CssBaseline />
+
       <Header
         onToggleSidebar={toggleSidebar}
         isSidebarVisible={isSidebarVisible}
       />
+
       {isSidebarVisible && <Box sx={styles.overlay} onClick={toggleSidebar} />}
       <Box ref={sidebarRef} sx={styles.sidebar}>
         {/* Sidebar Content */}

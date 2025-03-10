@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useTheme } from "@mui/material/styles";
 import { AppBar, Box, Toolbar, IconButton, InputBase } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
@@ -10,6 +10,7 @@ import SubHeader from "components/layout/SubHeader";
 import logo from "assets/styles/images/logo_text.png";
 import Person3Icon from "@mui/icons-material/Person3";
 import MenuIcon1 from "assets/styles/images/menu.png";
+import { NotificationContext } from "contexts/NotificationContext";
 // متغیر قابل تنظیم برای اندازه لوگو
 const logoHeight = 70; // ارتفاع لوگو را اینجا تنظیم کنید
 const logoContainerHeight = 64; // ارتفاع ثابت برای نوار (به عنوان مثال 64px)
@@ -19,6 +20,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { notifications } = useContext(NotificationContext);
 
   // استفاده از fallback برای آیکون‌ها
   const icons = theme.palette.icons || {

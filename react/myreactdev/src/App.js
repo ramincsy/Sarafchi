@@ -8,6 +8,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { lightTheme, darkTheme } from "themes/themes";
 import { publicRoutes, protectedRoutes } from "./routes/routes";
 import ProtectedRoute from "components/common/ProtectedRoute";
+import { NotificationProvider } from "contexts/NotificationContext";
 
 const Loading = () => <div>Loading...</div>;
 
@@ -30,28 +31,30 @@ function MainApp() {
       <BrowserRouter>
         <AuthProvider>
           <PermissionsProvider>
-            <Suspense fallback={<Loading />}>
-              <Routes>
-                {publicRoutes.map((route) => (
-                  <Route
-                    key={route.path}
-                    path={route.path}
-                    element={route.element}
-                  />
-                ))}
-                {protectedRoutes.map((route) => (
-                  <Route
-                    key={route.path}
-                    path={route.path}
-                    element={
-                      <ProtectedRoute>
-                        <Layout>{route.element}</Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-                ))}
-              </Routes>
-            </Suspense>
+            <NotificationProvider>
+              <Suspense fallback={<Loading />}>
+                <Routes>
+                  {publicRoutes.map((route) => (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={route.element}
+                    />
+                  ))}
+                  {protectedRoutes.map((route) => (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={
+                        <ProtectedRoute>
+                          <Layout>{route.element}</Layout>
+                        </ProtectedRoute>
+                      }
+                    />
+                  ))}
+                </Routes>
+              </Suspense>
+            </NotificationProvider>
           </PermissionsProvider>
         </AuthProvider>
       </BrowserRouter>
