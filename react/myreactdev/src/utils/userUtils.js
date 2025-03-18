@@ -37,9 +37,10 @@ const saveUserToLocalStorage = (userInfo) => {
  * دریافت اطلاعات کاربر از localStorage
  * @returns {Object|null} - اطلاعات کاربر یا null در صورت عدم وجود
  */
-const getUserFromLocalStorage = () => {
+export const getUserFromLocalStorage = () => {
   try {
     const userInfo = JSON.parse(localStorage.getItem("user_info"));
+    console.log("parse", userInfo);
     return userInfo || null;
   } catch (error) {
     console.error("Error reading user information from localStorage:", error);
@@ -54,29 +55,31 @@ const getUserFromLocalStorage = () => {
  */
 export const getUserID = (contextUserInfo = null) => {
   try {
-    // اگر contextUserInfo وجود داشته باشد و شامل user_id باشد، آن را برگردان
-    if (contextUserInfo?.UserID) {
-      return contextUserInfo.UserID; // فقط مقدار UserID بازگردانده شود
+    // اگر در کانتکست UserID موجود است
+    if (contextUserInfo?.UserID?.UserID) {
+      return contextUserInfo.UserID.UserID;
     }
 
     // تلاش برای دریافت اطلاعات از localStorage
     const localUserInfo = getUserFromLocalStorage();
-    if (localUserInfo?.UserID) {
-      return localUserInfo.UserID; // فقط مقدار UserID بازگردانده شود
+    if (localUserInfo?.UserID?.UserID) {
+      // اینجا حتماً به خصوصیت UserID از درون آبجکت تو در تو دسترسی می‌گیریم
+      return localUserInfo.UserID.UserID;
     }
 
-    // استخراج user_id از توکن در صورت نبودن در localStorage
+    // اگر توکن داریم، دیکودش می‌کنیم
     const token = tokenManager.getAccessToken();
     if (token) {
       const user_id = extractUserIDFromToken(token);
       if (user_id) {
-        // ذخیره اطلاعات کاربر در localStorage برای استفاده‌های آینده
-        saveUserToLocalStorage({ UserID: user_id }); // ذخیره فقط UserID
+        // اینجا تصمیم بگیرید آیا کل اطلاعات کاربر از سرور می‌آید یا فقط user_id
+        // اگر فقط user_id را ذخیره می‌کنید:
+        saveUserToLocalStorage({ UserID: user_id });
         return user_id;
       }
     }
 
-    // در صورت عدم موفقیت در تمام روش‌ها
+    // اگر هیچ‌کدام نبود
     return null;
   } catch (error) {
     console.error("Error reading user_id:", error);

@@ -16,7 +16,7 @@ import traceback
 from exchange_prices_routes import exchange_prices_bp
 import os
 from inquiry_jibit import jibit_bp
-from sqlalchemy import text  # type: ignore
+
 from withdrawals_routes import withdrawals_bp
 from roles_permissions_routes import roles_permissions_bp
 from page_routes import page_bp
@@ -33,7 +33,9 @@ from usdt_withdrawals_routes import usdt_withdrawals_bp
 from FinancialDashboard import financial_dashboard_bp
 from Iran_DateTime import get_iran_time
 from user_financial_ops_routes import user_financial_bp
-from equality_data_routes import equality_bp
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
+from equilibrium_api import equilibrium_bp
 build_folder = r'C:\inetpub\wwwroot\sarafchi'
 
 app = Flask(__name__, static_folder=build_folder, static_url_path='')
@@ -80,7 +82,7 @@ app.register_blueprint(push_notification_bp, url_prefix="/api/push")
 app.register_blueprint(usdt_withdrawals_bp)
 app.register_blueprint(financial_dashboard_bp)
 app.register_blueprint(user_financial_bp, url_prefix='/api')
-app.register_blueprint(equality_bp, url_prefix="/api")
+app.register_blueprint(equilibrium_bp, url_prefix='/api/equilibrium')
 
 @app.route('/test-db-connection', methods=['GET'])
 def test_db_connection():

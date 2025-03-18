@@ -22,7 +22,8 @@
       "pages/Profile/*": ["pages/Profile/*"],
       "pages/Transactions/*": ["pages/Transactions/*"],
       "pages/Withdrawals/*": ["pages/Withdrawals/*"],
-      "pages/Equality system/*": ["pages/EqualitySystem/*"],
+      "pages/EqualitySystem/*": ["pages/EqualitySystem/*"],
+      "pages/EqualitySystem/Dashboard": ["pages/EqualitySystem/Dashboard"],
       "services/*": ["services/*"],
       "utils/*": ["utils/*"],
       "themes/*": ["themes/*"]

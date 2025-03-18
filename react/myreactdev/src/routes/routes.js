@@ -30,20 +30,18 @@ import PageManager from "pages/PageManager";
 import RoleManagement from "pages/RoleManagement";
 import PermissionManagement from "pages/PermissionManagement";
 import UserRoleManagement from "pages/UserRoleManagement";
-
 import TestRefreshTokenPage from "pages/TestRefreshTokenPage";
 import UsersWalletsPage from "pages/Blockchain/Tron/UsersWalletsPage";
-
 import SendNotificationPage from "pages/SendNotificationPage";
+
 // import SendPushNotificationPage from "pages/SendPushNotificationPage";
 import WithdrawUSDTPage from "pages/Withdrawals/WithdrawUSDTPage";
 import FinancialDashboard from "pages/Dashboards/FinancialDashboard";
 import CartModal from "pages/CartModal/CartModal";
 import UserManagement from "pages/UserManagement";
-
 import ManageUserFinancial from "pages/ManagePartnersBanks/ManageUserFinancial";
-import EqualityCheckPage from "pages/EqualitySystem/EqualityCheckPage";
-import BuySellPage from "pages/EqualitySystem/BuySellPage/BuySellPage";
+import EquilibriumPage from "pages/EqualitySystem/EquilibriumPage";
+import EquilibriumDashboard from "pages/EqualitySystem/Dashboard/EquilibriumDashboard";
 // Route configurations
 export const publicRoutes = [
   {
@@ -308,18 +306,18 @@ export const protectedRoutes = [
     ),
   },
   {
-    path: "/EqualityCheckPage",
+    path: "/EquilibriumPage",
     element: (
       <ProtectedRoute>
-        <EqualityCheckPage />
+        <EquilibriumPage />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/BuySellPage",
+    path: "/EquilibriumDashboard",
     element: (
       <ProtectedRoute>
-        <BuySellPage />
+        <EquilibriumDashboard />
       </ProtectedRoute>
     ),
   },
